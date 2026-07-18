@@ -1,0 +1,6 @@
+- this repo is not necessarily coding.
+- this repo is meant to document brainstorms/discoveries related to the case on women's hormonal health. see discovery/case-05-Hack-Nation-Foundations-Model-for-Womens-Hormonal-Health.docx.md for all details.
+- this repo is meant for a hackathon.
+- provide links at all times when quoting a source.
+- a main paper used as a source is found in discovery/mcphases-paper.md.
+- for nhanes data, let's assume the base page is https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=Laboratory&Cycle=2021-2023 for data 2021-2023, since 2025-2026 data is very incomplete.
