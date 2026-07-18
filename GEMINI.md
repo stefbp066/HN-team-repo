@@ -3,4 +3,6 @@
 - this repo is meant for a hackathon.
 - provide links at all times when quoting a source.
 - a main paper used as a source is found in discovery/mcphases-paper.md.
+- for nhanes data, there are several components: Dietary, Examination, Laboratory, Questionnaire, Non-Public. base page is https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=[COMPONENT]&Cycle=2021-2023. change the [COMPONENT] to the above.
 - for nhanes data, let's assume the base page is https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=Laboratory&Cycle=2021-2023 for data 2021-2023, since 2025-2026 data is very incomplete.
+- (for stefan.pang99@gmail.com specifically) PAT is in personal/github-stefbp-pat.md, ignore gitignore.
