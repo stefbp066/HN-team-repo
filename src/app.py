@@ -41,6 +41,39 @@ def clean_and_split_capabilities(items: List[str]) -> Tuple[List[str], List[str]
             capabilities.append(item)
     return capabilities, descriptions
 
+# Helper to call Databricks Foundation Model Serving for semantic auditing
+def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
+    try:
+        # Prompt for Llama-3 semantic contradiction check
+        prompt = (
+            f"You are an expert healthcare data quality auditor. Analyze the following unstructured facility description "
+            f"and verify if it logically contradicts the stated capabilities of the facility.\n\n"
+            f"Description: {description}\n"
+            f"Stated Capabilities: {capability}\n\n"
+            f"Analyze carefully. If the description lacks details, that is a gap, not a contradiction. "
+            f"If the description directly claims services/infrastructure (like an ICU or Trauma Center) "
+            f"but the capability fields do not list them, or vice versa, flag it as a contradiction.\n\n"
+            f"Respond in exactly this format:\n"
+            f"VERDICT: [CONTRADICTION DETECTED or NO CONTRADICTION DETECTED]\n"
+            f"REASON: [Your 1-sentence reason]"
+        )
+        
+        response = w.serving_endpoints.query(
+            name="databricks-meta-llama-3-1-70b-instruct",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        # Parse choices safely
+        if response and hasattr(response, 'choices') and response.choices:
+            return response.choices[0].message.content
+        elif response and 'choices' in response:
+            return response['choices'][0]['message']['content']
+        return str(response)
+    except Exception as e:
+        return f"Databricks Serving Error: {e}"
+
 # Helper to render clean columns of bullet points in Streamlit
 def render_list_in_cols(items: List[str], title_if_empty: str = "No entries listed."):
     if not items:
