@@ -25,14 +25,14 @@ def run_pipeline():
       -- Contradiction Rule 1: Claimed ICU but missing bed capacity
       CASE
         WHEN (capability ILIKE '%ICU%' OR description ILIKE '%ICU%') 
-             AND (capacity IS NULL OR capacity = '0' OR capacity = '') THEN 1
+             AND (capacity IS NULL OR capacity = '0' OR capacity = '' OR capacity = 'null' OR capacity = 'NULL') THEN 1
         ELSE 0
       END as flag_icu_no_capacity,
 
       -- Contradiction Rule 2: Claimed emergency/trauma but zero/null doctors
       CASE
         WHEN (capability ILIKE '%emergency%' OR capability ILIKE '%trauma%') 
-             AND (numberDoctors IS NULL OR numberDoctors = '0' OR numberDoctors = '') THEN 1
+             AND (numberDoctors IS NULL OR numberDoctors = '0' OR numberDoctors = '' OR numberDoctors = 'null' OR numberDoctors = 'NULL') THEN 1
         ELSE 0
       END as flag_emergency_no_doctors,
 
@@ -45,16 +45,16 @@ def run_pipeline():
 
       -- Contradiction Rule 4: Critical Data Desert (completely empty meta metrics)
       CASE
-        WHEN capacity IS NULL AND numberDoctors IS NULL AND yearEstablished IS NULL THEN 1
+        WHEN (capacity IS NULL OR capacity = 'null' OR capacity = 'NULL') AND (numberDoctors IS NULL OR numberDoctors = 'null' OR numberDoctors = 'NULL') AND (yearEstablished IS NULL OR yearEstablished = 'null' OR yearEstablished = 'NULL') THEN 1
         ELSE 0
       END as flag_data_desert,
 
       -- Compute a Weighted Trust Score (0 - 100)
       100 - (
-        (CASE WHEN (capability ILIKE '%ICU%' OR description ILIKE '%ICU%') AND (capacity IS NULL OR capacity = '0' OR capacity = '') THEN 30 ELSE 0 END) +
-        (CASE WHEN (capability ILIKE '%emergency%' OR capability ILIKE '%trauma%') AND (numberDoctors IS NULL OR numberDoctors = '0' OR numberDoctors = '') THEN 35 ELSE 0 END) +
+        (CASE WHEN (capability ILIKE '%ICU%' OR description ILIKE '%ICU%') AND (capacity IS NULL OR capacity = '0' OR capacity = '' OR capacity = 'null' OR capacity = 'NULL') THEN 30 ELSE 0 END) +
+        (CASE WHEN (capability ILIKE '%emergency%' OR capability ILIKE '%trauma%') AND (numberDoctors IS NULL OR numberDoctors = '0' OR numberDoctors = '' OR numberDoctors = 'null' OR numberDoctors = 'NULL') THEN 35 ELSE 0 END) +
         (CASE WHEN (procedure ILIKE '%surgery%' OR capability ILIKE '%surgery%') AND (equipment NOT ILIKE '%anesthe%' AND equipment NOT ILIKE '%ventilator%' AND description NOT ILIKE '%anesthe%') THEN 20 ELSE 0 END) +
-        (CASE WHEN capacity IS NULL AND numberDoctors IS NULL AND yearEstablished IS NULL THEN 15 ELSE 0 END)
+        (CASE WHEN (capacity IS NULL OR capacity = 'null' OR capacity = 'NULL') AND (numberDoctors IS NULL OR numberDoctors = 'null' OR numberDoctors = 'NULL') AND (yearEstablished IS NULL OR yearEstablished = 'null' OR yearEstablished = 'NULL') THEN 15 ELSE 0 END)
       ) as trust_score,
 
       'PENDING' as review_status,
