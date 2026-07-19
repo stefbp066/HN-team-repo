@@ -55,6 +55,7 @@ This document contains your slide-by-slide structure, core talking points, step-
         *   `Delta Sharing Protocol` ──> `Photon Serverless SQL (api/2.0)` ──> `_delta_log Transaction Commits` ──> `Secure GPU Model Serving`
     *   **Color Accents**: Use glowing Mint Green (`#00CC96`) for the braces and Databricks Orange (`#FF3621`) for the center Serverless container and sub-text flow lines.
 
+---
 
 ## Slide 3: The 4 Core Contradiction Rules
 *   **Slide Title**: Algorithmic Integrity Over Manual Audits
@@ -83,7 +84,7 @@ This document contains your slide-by-slide structure, core talking points, step-
     2.  **Step 2: Show the Triage Queue & Open a Mock Example**
         *   *Say*: *"Let's look at this critical triage case Patna 24/7 Trauma Center. It has a Trust Score of only 65/100. Our pipeline flagged it under Active Trust Warnings because they claim 'emergency surgeries' in unstructured text, but list ZERO active doctors! This is a massive, life-threatening contradiction."*
     3.  **Step 3: Trigger the Databricks AI Audit (The Ultimate Flex!)**
-        *   *Say*: *"If an auditor is unsure, they don't guess. They click this button, launching a serverless query to Llama-3-70B on Databricks to semantically cross-examine the text against stated capabilities on-demand."*
+        *   *Say*: *"If an auditor is unsure, they don't guess. They click this button, launching a serverless query to Llama-3.3-70B on Databricks to semantically cross-examine the text against stated capabilities on-demand."*
     4.  **Step 4: Resolve the Triage Case (ACID Persistence)**
         *   *Say*: *"With one click, our writeback commits an ACID-compliant UPDATE statement directly back to Delta Lake in Unity Catalog. The cache evicts and updates our global registry in real-time."*
     5.  **Step 5: Show the Geographic Desert Map**
@@ -95,9 +96,26 @@ This document contains your slide-by-slide structure, core talking points, step-
 
 ---
 
-## Slide 5: Enterprise Scaling & Cost Optimization
+## Slide 5: The Feedback Loop & Automated AI Review
+*   **Slide Title**: Closing the Loop: Automated Feedback Auditing & LLM Synthesis
+*   **Your Script**:
+    > "Our app has a unique feature: it closes the loop between human expertise and automated code. Every time an auditor overrides a flag or saves a decision, their notes are committed directly to our **Unity Catalog Audit Ledger**.
+    > 
+    > To scale this feedback, engineers don't have to read thousands of notes. We deploy an **automated LLM Feedback Synthesis pipeline**. An LLM digests the raw audit ledger daily, clusters common human rejection themes (like 'Only visiting specialists on call'), and **automatically writes suggested SQL rule refinements** with side-by-side previews of the cleaned output.
+    > 
+    > We never let AI rewrite production code. We let AI write proposed code refinements for data engineers to approve. This is a secure, governed Self-Correction Loop."
+*   **Visual Layout & Graphic Elements**:
+    *   **Background**: Ice Blue White (`#F7F9FC`).
+    *   **Layout**: A clean circular workflow diagram with five distinct segments.
+    *   **Main Graphic (The Self-Correction Loop)**:
+        *   `[Human Auditor Decisions]` ──> `[Unity Catalog Audit Ledger]` ──> `[LLM Clustering & Extraction]` ──> `[AI-Generated SQL Proposed Refinements]` ──> `[Data Engineer Review & Deploy]` (Loops back to the beginning).
+    *   **Visual Callouts**: Highlight `[Audit Ledger]` in Deep Space Navy (`#0C1B33`), `[AI-Generated SQL]` in Databricks Orange (`#FF3621`), and `[Data Engineer Review]` in Mint Green (`#00CC96`) to show the strict human-controlled boundaries.
+
+---
+
+## Slide 6: Enterprise Scaling & Cost Optimization
 *   **Slide Title**: Pragmatic Lakehouse: Scheduled Batch Pipelines at Enterprise Scale
-*   **Your Script (The Future)**:
+*   **Your Script**:
     > "Many hackathon teams will try to sell you complex, real-time streaming architectures. But as senior architects, we must ask the hard question: *Does brick-and-mortar hospital infrastructure actually stream?* The answer is no. Hospital coordinates, specialties, and established years are static metrics. 
     > 
     > Forcing continuous, 24/7 streaming on this dataset is complete over-engineering that wastes 90% of your cloud compute budget for zero additional value.
@@ -112,8 +130,29 @@ This document contains your slide-by-slide structure, core talking points, step-
         *   **Card 3 (Governance)**: Key/Lock icon. Label: `Unity Catalog Security`. Text: `Enforces Row-Level filters (regional visibility) and column masking dynamically based on SSO groups.`
     *   **High-Contrast Stamp Overlay**: A glowing Terracotta Orange (`#FF3621`) badge or stamp on the slide stating: `💰 90% COMPUTE COST SAVINGS vs 24/7 STREAMING` (in bold, impactful lettering).
 
+---
 
-## Slide 6: Conclusion (Coordination is Care)
+## Slide 7: Enterprise Productionization Roadmap
+*   **Slide Title**: Enterprise Roadmap: Security, Scale, and LLM Benchmarks
+*   **Your Script**:
+    > "To scale our prototype to a global, enterprise production environment, our roadmap covers three pillars:
+    > 
+    > First, **GenAI Evaluation**: We continuously benchmark our Llama 3.3 audit model against golden evaluation datasets, logging precision, recall, and hallucination rates inside **MLflow** to prevent AI drift.
+    > 
+    > Second, **Enterprise Concurrency & Security**: To support thousands of concurrent planners querying the same datasets, we scale our synchronous polling engine using decoupled message queues, and enforce **Unity Catalog Row-Level Security**—limiting planners dynamically to their state boundaries and masking PII columns.
+    > 
+    > Third, **AI-Assisted Data Cleansing**: We build a standalone 'Data Preparation Desk' where LLMs generate SQL transformation drafts based on raw files, displaying a side-by-side preview of the suggested SQL output before execution."
+*   **Visual Layout & Graphic Elements**:
+    *   **Background**: Ice Blue White (`#F7F9FC`).
+    *   **Layout**: 3-column horizontal roadmap panel.
+    *   **Graphic Panels**:
+        *   **Pillar 1: GenAI Benchmarking**: Icon of line chart and MLflow logo. Text: `Golden evaluation datasets, MLflow tracking, prompt-version control.`
+        *   **Pillar 2: Concurrency & RLS**: Shield key icon. Text: `Decoupled query task-queues, Unity Catalog Row Filters, SSO-federated access.`
+        *   **Pillar 3: AI-Assisted SQL Prep**: Code editor icon. Text: `Natural language to SQL, side-by-side previews of raw vs cleaned SQL outputs before commits.`
+
+---
+
+## Slide 8: Conclusion (Coordination is Care)
 *   **Slide Title**: Turning Messy Data Into Actions We Can Defend
 *   **Your Script**:
     > "A Wrong Query on our app is not a bug—it is a family saved from driving hours to an unstaffed facility. By creating this secure, auditable trust layer on Databricks, we are turning 10,000 messy facility records into decisions planners can defend.
