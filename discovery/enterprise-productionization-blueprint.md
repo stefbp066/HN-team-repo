@@ -169,30 +169,3 @@ resources:
 2.  **GitHub Actions**: Triggers a deployment workflow.
 3.  **Validation**: GitHub runs unit tests and lints code.
 4.  **DAB Deploy**: Runs `databricks bundle deploy --target prod` using a secure CI/CD Service Principal, pushing the new container image and updating Unity Catalog Delta schemas without human intervention.
-
----
-
-## 6. Hybrid Operational/Analytical Decoupling (OLTP vs OLAP)
-
-A core architectural boundary in Databricks Delta Lake (OLAP) is that it is not designed to replace globally distributed, high-concurrency, sub-millisecond transactional databases (OLTP) like GCP Spanner or PostgreSQL.
-
-### Current Prototype State (Low Concurrency)
-For our hackathon scale, writing back directly to Delta Lake in Unity Catalog is highly efficient. Delta Lake's transaction log guarantees full **ACID compliance** via Optimistic Concurrency Control (OCC). Since only a few data librarians are triaging the queue, Delta Lake handles the low-concurrency updates perfectly without external database dependencies.
-
-### Enterprise Scaling State (High Concurrency / Real-time OLTP Decoupling)
-If this application scales to **10,000+ concurrent global medical planners** requiring sub-millisecond read/write latency, direct writebacks to Delta Lake would cause lock-contention and slower write latencies. 
-
-In this case, we decouple the architecture using an **Operational Data Store (ODS)**:
-
-```
- [ Databricks App UI ] ────(Instant Write)───> [ Operational DB (e.g., Spanner / Postgres) ]
-           │                                                      │
-     (Federated Read)                                        (CDC Stream)
-           │                                                      │
-           ▼                                                      ▼
- [ Lakehouse Federation ] <──(Real-time Queries)─── [ Delta Lake / Unity Catalog ]
-```
-
-1.  **Direct Writeback to OLTP**: The Streamlit App commits human decisions and reviewer notes instantly to an external, high-concurrency OLTP database (such as Spanner or Azure CosmosDB) for millisecond latency.
-2.  **Change Data Capture (CDC) Sync**: A continuous streaming pipeline (using Databricks Auto Loader or Debezium) streams the updates from the OLTP database back into the Delta Lake Gold table to keep analytics updated.
-3.  **Lakehouse Federation**: We configure **Databricks Lakehouse Federation** on Unity Catalog. This allows Databricks SQL compute to query and join Delta tables with the external Spanner/Postgres tables in real-time, on-demand, without moving data, providing a complete **Hybrid Transactional/Analytical Processing (HTAP)** framework.
