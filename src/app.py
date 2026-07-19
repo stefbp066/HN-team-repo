@@ -721,12 +721,12 @@ else:
                         opacity=0.8,
                         stroked=True,
                         filled=True,
-                        radius_scale=6,
-                        radius_min_pixels=6,
-                        radius_max_pixels=15,
+                        radius_scale=3,
+                        radius_min_pixels=3,
+                        radius_max_pixels=8,
                         line_width_min_pixels=1,
                         get_position="[longitude, latitude]",
-                        get_radius=15000,
+                        get_radius=7500,
                         get_fill_color="color_rgb",
                         get_line_color=[255, 255, 255, 200], # White outline
                     )
