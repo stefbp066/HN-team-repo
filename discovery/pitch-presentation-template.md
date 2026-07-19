@@ -85,27 +85,23 @@ This document contains your slide-by-slide structure, core talking points, step-
 
 ---
 
-## Slide 5: Enterprise Scaling & Ingestion Frequency
-*   **Slide Title**: Unified Dual-Speed Ingestion: Batch and Streaming at Scale
+## Slide 5: Enterprise Scaling & Cost Optimization
+*   **Slide Title**: Pragmatic Lakehouse: Scheduled Batch Pipelines at Enterprise Scale
 *   **Your Script (The Future)**:
-    > "To productionize our Data Readiness Desk, we must design for two distinct data speeds. Baseline facility metrics like coordinates or specialties are static and should be updated via **Batch (daily)** to minimize compute costs. However, operational metrics like active available ICU beds or active staff must be processed via **Streaming (real-time)** to coordinate emergency crisis routing safely.
+    > "Many hackathon teams will try to sell you complex, real-time streaming architectures. But as senior architects, we must ask the hard question: *Does brick-and-mortar hospital infrastructure actually stream?* The answer is no. Hospital coordinates, specialties, and established years are static metrics. 
     > 
-    > Traditionally, managing both speeds requires separate batch and streaming codebases—creating duplicate pipelines and data lag. 
+    > Forcing continuous, 24/7 streaming on this dataset is complete over-engineering that wastes 90% of your cloud compute budget for zero additional value.
     > 
-    > On Databricks, we unify these frequencies. Using **Auto Loader** and **Delta Live Tables (DLT)**, we use the exact same SQL queries for both workloads. For static metrics, we run DLT in scheduled batch intervals. For crisis metrics, we switch to continuous streaming. One governed Delta table, two ingestion speeds, zero code duplication."
+    > Our enterprise production architecture is **Pragmatically Batch**. We use **Databricks Auto Loader** to incrementally detect and ingest new CSV/JSON facility uploads from S3. But we execute our **Delta Live Tables (DLT)** pipeline on a cost-effective, scheduled daily interval. We enforce data-quality Expectations at the door, secure our gold tables with Unity Catalog Row Filters, and sleep soundly knowing we saved our NGO partners thousands of dollars in monthly cloud bills."
 *   **Visual Layout & Graphic Elements**:
     *   **Background**: Ice Blue White (`#F7F9FC`).
-    *   **Layout**: Horizontal split-screen. Left side focuses on the business need for dual-frequency data; Right side diagrams the technical simplicity of the unified Databricks pipeline.
-    *   **Main Graphic (Unified Data Flow)**:
-        *   **Left (Two Speeds of Health Data)**:
-            *   *Speed A: Static Baseline (Batch)* — `[Hospital Location, Specialties, Established Year]`
-            *   *Speed B: Dynamic Operations (Streaming)* — `[Active ICU Beds, Active Staff Shifts, Emergency Status]`
-        *   **Right (One Unified Pipeline)**:
-            *   `[Auto Loader Ingest]` ──> `[Delta Live Tables (DLT) Engine]` ──> `[Unified Delta Table (UC)]`
-            *   *(Visual indicator showing a toggle button transitioning from 'Batch Interval' to 'Continuous Stream' over the DLT Engine block)*
-    *   **Color Accents**: Highlight the 'Unified Delta Table' in Mint Green (`#00CC96`) and the 'DLT Engine' in Databricks Terracotta Orange (`#FF3621`) to show where the work is unified.
+    *   **Layout**: 3-column architectural pipeline card layout with a massive, high-contrast cost-savings badge.
+    *   **Graphic Columns**:
+        *   **Card 1 (Ingest)**: Icon of cloud bucket with clock. Label: `Incremental Ingestion`. Text: `Auto Loader triggers on a scheduled daily cron interval to pull only new files from S3.`
+        *   **Card 2 (Quality)**: Shield check icon. Label: `DLT Expectations`. Text: `Validates, cleans, and quarantines dirty records natively at schema boundary before table writes.`
+        *   **Card 3 (Governance)**: Key/Lock icon. Label: `Unity Catalog Security`. Text: `Enforces Row-Level filters (regional visibility) and column masking dynamically based on SSO groups.`
+    *   **High-Contrast Stamp Overlay**: A glowing Terracotta Orange (`#FF3621`) badge or stamp on the slide stating: `💰 90% COMPUTE COST SAVINGS vs 24/7 STREAMING` (in bold, impactful lettering).
 
----
 
 ## Slide 6: Conclusion (Coordination is Care)
 *   **Slide Title**: Turning Messy Data Into Actions We Can Defend
