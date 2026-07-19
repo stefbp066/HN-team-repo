@@ -32,13 +32,17 @@ This document contains your slide-by-slide structure, core talking points, step-
 ## Slide 2: The Core Engineering Solution (Overcoming Platform Boundaries)
 *   **Slide Title**: Overcoming Platform Boundaries: Custom Serverless Platform Engineering
 *   **Your Script (The Tech Rationale)**:
-    > "Deploying a native app on Databricks Serverless is more than just spinning up a container—we hit real, low-level platform boundaries, and we engineered our way past them.
+    > "Deploying our Data Readiness Desk natively on Databricks Serverless is more than just spinning up a container—we hit real, low-level platform boundaries, and we engineered our way past them.
     > 
-    > First, Serverless SQL execution is asynchronous. To prevent a race condition where our app queries tables before they are fully compiled, we built a **synchronous polling engine** that blocks Python execution and queries the `get_statement` API until our schema is guaranteed ready on disk.
+    > First, our raw ingestion streams directly from the secure **Delta Sharing Protocol** (zero-copy data sharing) using **Auto Loader** and Photon-powered SQL.
     > 
-    > Second, because raw scraping data is notoriously inconsistent, we enforced a **strict, type-safe schema** in Python, casting raw lists and string representations of integers before Streamlit/Plotly rendering.
+    > Second, Serverless SQL execution is asynchronous. To prevent a race condition where our app queries tables before they are fully compiled, we built a **synchronous polling engine** that blocks Python execution and queries the `get_statement` API until our schema is guaranteed ready on disk.
     > 
-    > Finally, to run semantic audits on-demand, we integrated Llama 3.3. When standard dictionaries threw SDK serialization errors, we bypassed the bugs by binding directly to typed, native **ChatMessage dataclasses**. This isn't just an app; it is a hardened, platform-aware engineering solution."
+    > Third, because raw scraping data is notoriously inconsistent, we enforced a **strict, type-safe schema** in Python, casting raw lists and string representations of integers before Streamlit/Plotly rendering.
+    > 
+    > Fourth, to run semantic audits on-demand, we query **Llama-3.3-70B on Serverless GPU Model Serving**. When standard dictionaries threw SDK serialization errors, we bypassed the bugs by binding directly to typed, native **ChatMessage dataclasses**. 
+    > 
+    > Finally, our writebacks trigger an ACID-compliant SQL `UPDATE` statement, directly committing a transaction JSON file back to Delta Lake's **`_delta_log` ledger** under Unity Catalog governance. This is a hardened, platform-aware engineering solution."
 *   **Visual Layout & Graphic Elements**:
     *   **Background**: Charcoal Obsidian Dark (`#111827`) for a high-tech console feel.
     *   **Layout**: Center-aligned core engine diagram with three outward-radiating "Hardened Security Braces" representing your custom engineering fixes.
@@ -47,7 +51,9 @@ This document contains your slide-by-slide structure, core talking points, step-
         *   *Brace 1 (Top Left)*: `Custom Synchronous Polling Engine` (Icon of a loading circular status bar). Text: `Queries w.statement_execution.get_statement in a while loop to prevent asynchronous TABLE_OR_VIEW_NOT_FOUND race conditions.`
         *   *Brace 2 (Top Right)*: `Strict PEP DataFrame Type Casting` (Icon of a typed dataset schema with checkmarks). Text: `Enforces strict casts on inconsistent float, string, and null metrics, guaranteeing Streamlit/Plotly visual stability.`
         *   *Brace 3 (Bottom)*: `Typed SDK ChatMessage Binding` (Icon of a terminal bracket with a brain icon). Text: `Instantiates native ChatMessage & ChatMessageRole objects, bypassing dictionary serialization bugs in the Databricks Python SDK.`
-    *   **Color Accents**: Use glowing Mint Green (`#00CC96`) for the braces to show they are "Active & Hardened" and Databricks Orange (`#FF3621`) for the center Serverless container.
+    *   **Sub-text Overlay (Bottom Footer)**: Small blueprint icons detailing:
+        *   `Delta Sharing Protocol` ──> `Photon Serverless SQL (api/2.0)` ──> `_delta_log Transaction Commits` ──> `Secure GPU Model Serving`
+    *   **Color Accents**: Use glowing Mint Green (`#00CC96`) for the braces and Databricks Orange (`#FF3621`) for the center Serverless container and sub-text flow lines.
 
 
 ## Slide 3: The 4 Core Contradiction Rules
