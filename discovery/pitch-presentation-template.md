@@ -141,14 +141,14 @@ This document contains your slide-by-slide structure, core talking points, step-
     > 
     > Second, **Enterprise Concurrency & Security**: To support thousands of concurrent planners querying the same datasets, we scale our synchronous polling engine using decoupled message queues, and enforce **Unity Catalog Row-Level Security**—limiting planners dynamically to their state boundaries and masking PII columns.
     > 
-    > Third, **AI-Assisted Data Cleansing**: We build a standalone 'Data Preparation Desk' where LLMs generate SQL transformation drafts based on raw files, displaying a side-by-side preview of the suggested SQL output before execution."
+    > Third, **AI-Assisted Data Cleansing**: We leverage native **Databricks Visual Data Prep with Databricks Assistant**. This allows non-technical planners to clean, structure, and filter messy source data using an intuitive GUI, while the Assistant automatically generates the underlying SQL code and displays a live side-by-side preview of the cleaned output before commits."
 *   **Visual Layout & Graphic Elements**:
     *   **Background**: Ice Blue White (`#F7F9FC`).
     *   **Layout**: 3-column horizontal roadmap panel.
     *   **Graphic Panels**:
         *   **Pillar 1: GenAI Benchmarking**: Icon of line chart and MLflow logo. Text: `Golden evaluation datasets, MLflow tracking, prompt-version control.`
         *   **Pillar 2: Concurrency & RLS**: Shield key icon. Text: `Decoupled query task-queues, Unity Catalog Row Filters, SSO-federated access.`
-        *   **Pillar 3: AI-Assisted SQL Prep**: Code editor icon. Text: `Natural language to SQL, side-by-side previews of raw vs cleaned SQL outputs before commits.`
+        *   **Pillar 3: Visual Data Prep**: Databricks Assistant icon. Text: `GUI-driven data cleansing, automated SQL compilation, live side-by-side transformations preview.`
 
 ---
 
