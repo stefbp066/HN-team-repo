@@ -5,6 +5,39 @@ import time
 import json
 from typing import Optional, Any, Tuple, List
 from databricks.sdk import WorkspaceClient
+# Helper to call Databricks Foundation Model Serving for semantic auditing
+def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
+    try:
+        # Prompt for Llama-3 semantic contradiction check
+        prompt = (
+            f"You are an expert healthcare data quality auditor. Analyze the following unstructured facility description "
+            f"and verify if it logically contradicts the stated capabilities of the facility.\n\n"
+            f"Description: {description}\n"
+            f"Stated Capabilities: {capability}\n\n"
+            f"Analyze carefully. If the description lacks details, that is a gap, not a contradiction. "
+            f"If the description directly claims services/infrastructure (like an ICU or Trauma Center) "
+            f"but the capability fields do not list them, or vice versa, flag it as a contradiction.\n\n"
+            f"Respond in exactly this format:\n"
+            f"VERDICT: [CONTRADICTION DETECTED or NO CONTRADICTION DETECTED]\n"
+            f"REASON: [Your 1-sentence reason]"
+        )
+        
+        response = w.serving_endpoints.query(
+            name="databricks-meta-llama-3-1-70b-instruct",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        # Parse choices safely
+        if response and hasattr(response, 'choices') and response.choices:
+            return response.choices[0].message.content
+        elif response and 'choices' in response:
+            return response['choices'][0]['message']['content']
+        return str(response)
+    except Exception as e:
+        return f"Databricks Serving Error: {e}"
+
 # Helper to parse messy JSON-like strings safely
 def parse_messy_list(raw_text: str) -> List[str]:
     if not raw_text or raw_text == "NULL" or raw_text.strip() == "":
@@ -549,6 +582,17 @@ else:
                     
                     if not active_flags:
                         st.success("Clean Record: No contradictions detected by the automated data readiness pipeline.")
+                    
+                    # Databricks AI Copilot Audit Trigger
+                    st.markdown("<br><b>Databricks AI Copilot Audit:</b>", unsafe_allow_html=True)
+                    if st.button("🤖 Run Live AI Contradiction Audit", use_container_width=True):
+                        with st.spinner("Executing Llama-3-70B semantic audit on Serverless compute..."):
+                            ai_verdict = run_ai_audit(w, facility['description'], facility['capability'])
+                            st.markdown("##### AI Audit Analysis:")
+                            if "CONTRADICTION DETECTED" in ai_verdict:
+                                st.error(ai_verdict)
+                            else:
+                                st.success(ai_verdict)
 
                 # FULL ROW: Structured Claims with Expanders and On-The-Fly Cleaning
                 st.markdown("---")
