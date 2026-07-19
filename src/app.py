@@ -5,7 +5,7 @@ import time
 import json
 from typing import Optional, Any, Tuple, List
 from databricks.sdk import WorkspaceClient
-# Helper to call Databricks Foundation Model Serving for semantic auditing
+# Helper to call Databricks Foundation Model Serving for semantic auditing using raw API client bypass
 def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
     try:
         # Prompt for Llama-3 semantic contradiction check
@@ -22,171 +22,24 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
             f"REASON: [Your 1-sentence reason]"
         )
         
-        response = w.serving_endpoints.query(
-            name="databricks-meta-llama-3-1-70b-instruct",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+        # Use api_client.do() raw HTTP payload bypass to avoid Databricks SDK dict.as_dict() validation bugs
+        response = w.api_client.do(
+            method="POST",
+            path="/api/2.0/serving-endpoints/databricks-meta-llama-3-1-70b-instruct/invocations",
+            body={
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ]
+            }
         )
         
-        # Parse choices safely
-        if response and hasattr(response, 'choices') and response.choices:
-            return response.choices[0].message.content
-        elif response and 'choices' in response:
-            return response['choices'][0]['message']['content']
+        # Parse raw response dictionary safely
+        if response and "choices" in response and response["choices"]:
+            return response["choices"][0]["message"]["content"]
         return str(response)
     except Exception as e:
-        return f"Databricks Serving Error: {e}"
+        return f"Databricks Serving Error: {e}" 
 
-# Helper to parse messy JSON-like strings safely
-def parse_messy_list(raw_text: str) -> List[str]:
-    if not raw_text or raw_text == "NULL" or raw_text.strip() == "":
-        return []
-    # Attempt parsing as a real JSON array
-    try:
-        parsed = json.loads(raw_text)
-        if isinstance(parsed, list):
-            return [str(item).strip() for item in parsed if item]
-    except Exception:
-        pass
-    # Fallback parsing: strip brackets, split on commas, strip quotes
-    cleaned = raw_text.strip("[]' \"")
-    # Simple regex to split by commas outside quotes
-    items = [item.strip().strip("'\" ") for item in re.split(r',(?=(?:[^\'\"]*\'[^\']*\')*[^\']*$)', cleaned)]
-    return [item for item in items if item]
-
-# Helper to filter out descriptive junk from actual medical capabilities
-def clean_and_split_capabilities(items: List[str]) -> Tuple[List[str], List[str]]:
-    capabilities = []
-    descriptions = []
-    noise_keywords = [
-        "located in", "established in", "partnership with", "operating since", 
-        "years in healthcare", "private, paid", "sanchalit", "trust sanchalit", 
-        "operating for", "established by"
-    ]
-    
-    for item in items:
-        item_lower = item.lower()
-        # If it has descriptive keywords or is a long sentence (> 90 chars), classify as historical description
-        if any(kw in item_lower for kw in noise_keywords) or len(item) > 90:
-            descriptions.append(item)
-        else:
-            capabilities.append(item)
-    return capabilities, descriptions
-
-# Helper to call Databricks Foundation Model Serving for semantic auditing
-def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
-    try:
-        # Prompt for Llama-3 semantic contradiction check
-        prompt = (
-            f"You are an expert healthcare data quality auditor. Analyze the following unstructured facility description "
-            f"and verify if it logically contradicts the stated capabilities of the facility.\n\n"
-            f"Description: {description}\n"
-            f"Stated Capabilities: {capability}\n\n"
-            f"Analyze carefully. If the description lacks details, that is a gap, not a contradiction. "
-            f"If the description directly claims services/infrastructure (like an ICU or Trauma Center) "
-            f"but the capability fields do not list them, or vice versa, flag it as a contradiction.\n\n"
-            f"Respond in exactly this format:\n"
-            f"VERDICT: [CONTRADICTION DETECTED or NO CONTRADICTION DETECTED]\n"
-            f"REASON: [Your 1-sentence reason]"
-        )
-        
-        response = w.serving_endpoints.query(
-            name="databricks-meta-llama-3-1-70b-instruct",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        
-        # Parse choices safely
-        if response and hasattr(response, 'choices') and response.choices:
-            return response.choices[0].message.content
-        elif response and 'choices' in response:
-            return response['choices'][0]['message']['content']
-        return str(response)
-    except Exception as e:
-        return f"Databricks Serving Error: {e}"
-
-# Helper to render clean columns of bullet points in Streamlit
-def render_list_in_cols(items: List[str], title_if_empty: str = "No entries listed."):
-    if not items:
-        st.write(f"*{title_if_empty}*")
-        return
-    
-    # Split list into 2 columns for a tighter, cleaner layout
-    col_a, col_b = st.columns(2)
-    half = (len(items) + 1) // 2
-    
-    with col_a:
-        for item in items[:half]:
-            st.markdown(f"- {item}")
-    with col_b:
-        for item in items[half:]:
-            st.markdown(f"- {item}")
-
-
-
-# Set up Streamlit page config
-st.set_page_config(
-    page_title="India Healthcare Data Readiness Desk",
-    page_icon="🏥",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Initialize Databricks Workspace Client
-@st.cache_resource
-def get_workspace_client() -> Optional[WorkspaceClient]:
-    try:
-        # Programmatically reads local env variables when running inside Databricks App
-        return WorkspaceClient()
-    except Exception as e:
-        st.error(f"Failed to authenticate with Databricks SDK: {e}")
-        return None
-
-# Discover the SQL Warehouse ID programmatically
-@st.cache_data
-def get_warehouse_id() -> Optional[str]:
-    w = get_workspace_client()
-    if not w:
-        return None
-    try:
-        # Fetch first available SQL warehouse
-        for wh in w.warehouses.list():
-            if wh.state.name in ["RUNNING", "STARTING", "STOPPED"]:
-                return wh.id
-    except Exception as e:
-        st.sidebar.error(f"Error finding SQL Warehouse: {e}")
-    return None
-
-# Helper to run any SQL statement with synchronous polling
-def run_sql_statement(w: WorkspaceClient, warehouse_id: str, sql_query: str) -> Optional[Any]:
-    try:
-        response = w.statement_execution.execute_statement(
-            warehouse_id=warehouse_id,
-            statement=sql_query
-        )
-        
-        # Poll statement status to avoid asynchronous race conditions
-        statement_id = response.statement_id
-        state = response.status.state.name
-        
-        while state in ["PENDING", "RUNNING"]:
-            time.sleep(1)
-            status_resp = w.statement_execution.get_statement(statement_id=statement_id)
-            state = status_resp.status.state.name
-            if state == "SUCCEEDED":
-                return status_resp
-            elif state in ["FAILED", "CANCELED"]:
-                error_msg = status_resp.status.error.message if status_resp.status.error else "Unknown error"
-                raise Exception(f"Statement failed with state {state}: {error_msg}")
-                
-        return response
-    except Exception as e:
-        st.error(f"SQL Execution Error: {e}")
-        return None
-
-# Helper to fetch query results into a DataFrame with type safety
 def run_sql_query(w: WorkspaceClient, warehouse_id: str, sql_query: str) -> pd.DataFrame:
     response = run_sql_statement(w, warehouse_id, sql_query)
     if not response or not response.manifest or not response.manifest.schema:
@@ -517,7 +370,7 @@ else:
             st.markdown("---")
 
             # TRIAGE QUEUE & WORKFLOW
-            st.subheader("🚨 The Triage Queue (Sorted by lowest trust)")
+            st.subheader("The Triage Queue")
         
             # Display search-ready list of messy/flagged facilities
             df_display = df[['unique_id', 'name', 'address_city', 'address_stateOrRegion', 'trust_score', 'review_status']].sort_values(by='trust_score')
