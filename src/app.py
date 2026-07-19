@@ -275,7 +275,7 @@ if not w or not warehouse_id:
 else:
     # Title Section
     st.title("🏥 India Healthcare Data Readiness Desk")
-    st.markdown("### *Trust Layer & Contradiction Validation Pipeline for 10k Facility Records*")
+    st.markdown("### *Databricks Intelligence Platform: Automating Ground-Truth Validation for Healthcare Infrastructure*")
     st.markdown("---")
 
     # Load and cache main data
@@ -384,7 +384,15 @@ else:
         # Display search-ready list of messy/flagged facilities
         df_display = df[['unique_id', 'name', 'address_city', 'address_stateOrRegion', 'trust_score', 'review_status']].sort_values(by='trust_score')
         
-        st.dataframe(df_display, use_container_width=True, hide_index=True)
+        def color_trust_score(val):
+            if val < 70:
+                return 'background-color: #ffcccc; color: #990000; font-weight: bold'
+            elif val < 90:
+                return 'background-color: #fff4cc; color: #886600'
+            return 'background-color: #ccffcc; color: #006600'
+            
+        styled_df = df_display.style.map(color_trust_score, subset=['trust_score'])
+        st.dataframe(styled_df, use_container_width=True, hide_index=True)
         
         st.markdown("---")
         
@@ -399,43 +407,56 @@ else:
             # Fetch single selected record details
             facility = df[df['unique_id'] == selected_id].iloc[0]
             
+            # FULL ROW: Key Identification
+            st.markdown(f"### {facility['name']}")
+            st.markdown(f"**Location**: {facility['address_city']}, {facility['address_stateOrRegion']}")
+            st.markdown(
+                f"**Computed Trust Score**: `{facility['trust_score']}/100` "
+                f'<span title="Base 100. Deductions: ICU missing beds (-30), Trauma missing doctors (-35), Surgery missing anesthesia (-20), Complete Data Desert (-15).">ℹ️</span>',
+                unsafe_allow_html=True
+            )
+            st.markdown(f"**Current Status**: `{facility['review_status']}`")
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # TWO COLUMNS: Unstructured Notes vs Warnings
             d_col1, d_col2 = st.columns(2)
             
             with d_col1:
-                st.markdown(f"### {facility['name']}")
-                st.markdown(f"**📍 Location**: {facility['address_city']}, {facility['address_stateOrRegion']}")
-                st.markdown(f"**🛡️ Computed Trust Score**: `{facility['trust_score']}/100`")
-                st.markdown(f"**📊 Current Status**: `{facility['review_status']}`")
-                
-                st.markdown("#### Structured Claims:")
-                st.write(f"- 🛌 **Bed Capacity Claim**: `{facility['capacity'] or 'NULL'}`")
-                st.write(f"- 🩺 **Doctors Count**: `{facility['numberDoctors'] or 'NULL'}`")
-                st.write(f"- 🔬 **Equipment Claimed**: `{facility['equipment'] or 'NULL'}`")
-                st.write(f"- 🏥 **Capabilities Stated**: `{facility['capability'] or 'NULL'}`")
-                st.write(f"- 💉 **Procedures Listed**: `{facility['procedure'] or 'NULL'}`")
-                
-            with d_col2:
-                st.markdown("#### 📄 Raw Facility Description (Unstructured Note):")
+                st.markdown("#### Raw Facility Description (Unstructured Note):")
                 st.info(facility['description'] if facility['description'] else "No description available.")
                 
-                # Render active flags clearly
-                st.markdown("#### ⚠️ Active Trust Warnings:")
+            with d_col2:
+                # Render active flags clearly without emojis in the title
+                st.markdown("#### Active Trust Warnings:")
                 active_flags = False
                 if facility['flag_icu_no_capacity'] == 1:
-                    st.error("🚨 **ICU Bed Mismatch**: Facility claims ICU capability/notes but lists 0 or NULL bed capacity!")
+                    st.error("ICU Bed Mismatch: Facility claims ICU capability/notes but lists 0 or NULL bed capacity.")
                     active_flags = True
                 if facility['flag_emergency_no_doctors'] == 1:
-                    st.error("🚨 **Emergency Mismatch**: Facility claims emergency/trauma but lists 0 or NULL doctors!")
+                    st.error("Emergency Mismatch: Facility claims emergency/trauma but lists 0 or NULL doctors.")
                     active_flags = True
                 if facility['flag_surgery_no_anesthesia'] == 1:
-                    st.error("🚨 **Anesthesia Gap**: Complex surgeries/procedures are listed but no Anesthesia or Ventilator equipment found!")
+                    st.error("Anesthesia Gap: Complex surgeries/procedures are listed but no Anesthesia or Ventilator equipment found.")
                     active_flags = True
                 if facility['flag_data_desert'] == 1:
-                    st.warning("⚠️ **Data Desert Alert**: No structural metrics (established year, capacity, doctors) available for validation.")
+                    st.warning("Data Desert Alert: No structural metrics (established year, capacity, doctors) available for validation.")
                     active_flags = True
                     
                 if not active_flags:
-                    st.success("✅ **Clean Record**: No contradictions detected by the automated data readiness pipeline.")
+                    st.success("Clean Record: No contradictions detected by the automated data readiness pipeline.")
+
+            # FULL ROW: Structured Claims with Expanders
+            st.markdown("---")
+            st.markdown("#### Structured Claims:")
+            st.write(f"- **Bed Capacity Claim**: `{facility['capacity'] or 'NULL'}`")
+            st.write(f"- **Doctors Count**: `{facility['numberDoctors'] or 'NULL'}`")
+            st.write(f"- **Procedures Listed**: `{facility['procedure'] or 'NULL'}`")
+            
+            with st.expander("View Capabilities Stated"):
+                st.write(facility['capability'] or 'NULL')
+                
+            with st.expander("View Equipment Claimed"):
+                st.write(facility['equipment'] or 'NULL')
 
             st.markdown("---")
             
