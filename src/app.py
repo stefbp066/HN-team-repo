@@ -116,6 +116,8 @@ def initialize_gold_table(w: WorkspaceClient, warehouse_id: str) -> None:
           equipment,
           numberDoctors,
           capacity,
+          latitude,
+          longitude,
           
           -- Contradiction Rule 1: Claimed ICU but missing bed capacity
           CASE
@@ -170,6 +172,8 @@ def initialize_gold_table(w: WorkspaceClient, warehouse_id: str) -> None:
           'Defibrillator, ECG' as equipment,
           '12' as numberDoctors,
           '0' as capacity, -- CONTRADICTION: Claims 50 ICU beds but capacity is 0!
+          28.6139 as latitude,
+          77.2090 as longitude,
           1 as flag_icu_no_capacity,
           0 as flag_emergency_no_doctors,
           0 as flag_surgery_no_anesthesia,
@@ -192,6 +196,8 @@ def initialize_gold_table(w: WorkspaceClient, warehouse_id: str) -> None:
           'Oxygen Cylinders, Stretcher' as equipment,
           '0' as numberDoctors, -- CONTRADICTION: 24/7 emergency trauma but 0 doctors!
           '15' as capacity,
+          25.5941 as latitude,
+          85.1376 as longitude,
           0 as flag_icu_no_capacity,
           1 as flag_emergency_no_doctors,
           0 as flag_surgery_no_anesthesia,
@@ -214,6 +220,8 @@ def initialize_gold_table(w: WorkspaceClient, warehouse_id: str) -> None:
           'Scalpels, Surgical Lamps, Forceps' as equipment, -- CONTRADICTION: Major open-heart surgery but no anesthesia or ventilator!
           '5' as numberDoctors,
           '10' as capacity,
+          26.9124 as latitude,
+          75.7873 as longitude,
           0 as flag_icu_no_capacity,
           0 as flag_emergency_no_doctors,
           1 as flag_surgery_no_anesthesia,
@@ -263,6 +271,11 @@ def load_gold_data(warehouse_id: str) -> pd.DataFrame:
         # Triage status and text notes casting
         df['review_status'] = df['review_status'].fillna("PENDING").astype(str)
         df['reviewer_notes'] = df['reviewer_notes'].fillna("").astype(str)
+        
+        # Geo-casting for maps
+        if 'latitude' in df.columns and 'longitude' in df.columns:
+            df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
+            df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
         
     return df
 
@@ -350,9 +363,64 @@ else:
             st.metric("🔴 Flagged Contradictions", f"{flagged_rec:,}")
 
         st.markdown("---")
+        
+        # --- TAB LAYOUT (No Emojis) ---
+        tab_queue, tab_map = st.tabs(["Audit and Triage Queue", "Geographic Desert Map"])
+        
+        with tab_map:
+            st.subheader("High-Risk Vulnerability Map")
+            st.markdown("Visualizing computed trust scores and Data Deserts across India to aid public health planners.")
+            
+            # Map rendering
+            if 'latitude' in df.columns and 'longitude' in df.columns:
+                # Drop rows without coords
+                df_map = df.dropna(subset=['latitude', 'longitude'])
+                
+                # Define a category for the map color
+                def get_map_category(row):
+                    if row['flag_data_desert'] == 1:
+                        return 'Data Desert (No Metrics)'
+                    elif row['review_status'] == 'FLAGGED':
+                        return 'Human Flagged Fraud/Error'
+                    elif row['trust_score'] < 70:
+                        return 'High Contradiction Risk'
+                    elif row['review_status'] == 'APPROVED':
+                        return 'Human Approved'
+                    else:
+                        return 'Pending / Low Risk'
+                
+                df_map['Risk Category'] = df_map.apply(get_map_category, axis=1)
+                
+                color_map = {
+                    'Data Desert (No Metrics)': '#808080', # Gray
+                    'High Contradiction Risk': '#FF4B4B',  # Red
+                    'Human Flagged Fraud/Error': '#000000', # Black
+                    'Human Approved': '#00CC96', # Green
+                    'Pending / Low Risk': '#636EFA' # Blue
+                }
+                
+                fig_map = px.scatter_mapbox(
+                    df_map, 
+                    lat="latitude", 
+                    lon="longitude", 
+                    color="Risk Category",
+                    color_discrete_map=color_map,
+                    hover_name="name", 
+                    hover_data=["address_city", "trust_score", "capacity", "numberDoctors"],
+                    zoom=3.5, 
+                    height=600,
+                    center={"lat": 20.5937, "lon": 78.9629} # Center on India
+                )
+                
+                fig_map.update_layout(mapbox_style="carto-positron", margin={"r":0,"t":0,"l":0,"b":0})
+                st.plotly_chart(fig_map, use_container_width=True)
+            else:
+                st.error("Latitude and Longitude coordinates not available in the current dataset schema.")
+            
 
-        # PLOTS & CHARTS PANEL
-        c_left, c_right = st.columns(2)
+        with tab_queue:
+            # PLOTS & CHARTS PANEL
+            c_left, c_right = st.columns(2)
         
         with c_left:
             st.subheader("Trust Score Distribution")
