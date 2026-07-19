@@ -5,10 +5,12 @@ import time
 import json
 from typing import Optional, Any, Tuple, List
 from databricks.sdk import WorkspaceClient
-# Helper to call Databricks Foundation Model Serving for semantic auditing using raw API client bypass
+# Helper to call Databricks Foundation Model Serving for semantic auditing using official ChatMessage Dataclasses
 def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
     try:
-        # Prompt for Llama-3 semantic contradiction check
+        from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
+        
+        # Prompt for Llama-3.3 semantic contradiction check
         prompt = (
             f"You are an expert healthcare data quality auditor. Analyze the following unstructured facility description "
             f"and verify if it logically contradicts the stated capabilities of the facility.\n\n"
@@ -22,20 +24,20 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
             f"REASON: [Your 1-sentence reason]"
         )
         
-        # Use api_client.do() raw HTTP payload bypass to avoid Databricks SDK dict.as_dict() validation bugs
-        response = w.api_client.do(
-            method="POST",
-            path="/api/2.0/serving-endpoints/databricks-meta-llama-3-3-70b-instruct/invocations",
-            body={
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ]
-            }
+        # Execute query using validated SDK dataclass structures
+        response = w.serving_endpoints.query(
+            name="databricks-meta-llama-3-3-70b-instruct",
+            messages=[
+                ChatMessage(
+                    role=ChatMessageRole.USER,
+                    content=prompt
+                )
+            ]
         )
         
-        # Parse raw response dictionary safely
-        if response and "choices" in response and response["choices"]:
-            return response["choices"][0]["message"]["content"]
+        # Parse choices safely from typed SDK response
+        if response and hasattr(response, 'choices') and response.choices:
+            return response.choices[0].message.content
         return str(response)
     except Exception as e:
         return f"Databricks Serving Error: {e}"
@@ -76,10 +78,12 @@ def clean_and_split_capabilities(items: List[str]) -> Tuple[List[str], List[str]
             capabilities.append(item)
     return capabilities, descriptions
 
-# Helper to call Databricks Foundation Model Serving for semantic auditing using raw API client bypass
+# Helper to call Databricks Foundation Model Serving for semantic auditing using official ChatMessage Dataclasses
 def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
     try:
-        # Prompt for Llama-3 semantic contradiction check
+        from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
+        
+        # Prompt for Llama-3.3 semantic contradiction check
         prompt = (
             f"You are an expert healthcare data quality auditor. Analyze the following unstructured facility description "
             f"and verify if it logically contradicts the stated capabilities of the facility.\n\n"
@@ -93,20 +97,20 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
             f"REASON: [Your 1-sentence reason]"
         )
         
-        # Use api_client.do() raw HTTP payload bypass to avoid Databricks SDK dict.as_dict() validation bugs
-        response = w.api_client.do(
-            method="POST",
-            path="/api/2.0/serving-endpoints/databricks-meta-llama-3-3-70b-instruct/invocations",
-            body={
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ]
-            }
+        # Execute query using validated SDK dataclass structures
+        response = w.serving_endpoints.query(
+            name="databricks-meta-llama-3-3-70b-instruct",
+            messages=[
+                ChatMessage(
+                    role=ChatMessageRole.USER,
+                    content=prompt
+                )
+            ]
         )
         
-        # Parse raw response dictionary safely
-        if response and "choices" in response and response["choices"]:
-            return response["choices"][0]["message"]["content"]
+        # Parse choices safely from typed SDK response
+        if response and hasattr(response, 'choices') and response.choices:
+            return response.choices[0].message.content
         return str(response)
     except Exception as e:
         return f"Databricks Serving Error: {e}"
