@@ -85,22 +85,25 @@ This document contains your slide-by-slide structure, core talking points, step-
 
 ---
 
-## Slide 5: Enterprise Scaling Rationale
-*   **Slide Title**: Scaling to Enterprise Production
+## Slide 5: Enterprise Scaling Rationale (GCP to Databricks Architecture)
+*   **Slide Title**: Unified Lakehouse Streaming: Scaling to Enterprise Production
 *   **Your Script (The Future)**:
-    > "Our design is 100% ready to scale. To productionize this across global healthcare networks:
-    > 1. We replace static loads with Databricks Auto Loader and streaming Delta Live Tables (DLT) for continuous, real-time ingestion.
-    > 2. We move UI validations to DLT Expectations to reject or quarantine bad records before they hit the warehouse.
-    > 3. We implement Unity Catalog Row-Level Security to restrict regional coordinators to their state's records, and mask contact fields automatically.
-    > 4. We bundle everything with Databricks Asset Bundles (DAB) for automated dev-to-prod CI/CD."
+    > "Planners need real-time data streaming to coordinate emergency hospital bed allocations during a crisis. If you come from a Google Cloud background, you are likely used to Pub/Sub, Dataflow, and BigQuery. In Databricks, we achieve the exact same real-time streaming capability, but unified under a single, highly simplified SQL and Delta Lake architecture.
+    > 
+    > Instead of setting up Pub/Sub topics, we use **Databricks Auto Loader** to stream incoming CSVs/JSONs directly from cloud buckets. Instead of complex Apache Beam pipelines in Dataflow, we use **Delta Live Tables (DLT)**. With DLT, we write standard SQL queries marked with `STREAMING TABLE`. Databricks handles the cluster auto-scaling, state-checkpointing, and data-quality Expectations natively. 
+    > 
+    > This is the power of a Unified Lakehouse—unifying batch and streaming under one governed database."
 *   **Visual Layout & Graphic Elements**:
     *   **Background**: Ice Blue White (`#F7F9FC`).
-    *   **Layout**: 4-column structured grid. Each column represents a production pillar.
-    *   **Graphic Columns**:
-        *   **Pillar 1**: Icon of spinning gears/stream. Label: `Continuous Streaming Ingest`. Text: `Auto Loader + Delta Live Tables`.
-        *   **Pillar 2**: Shield icon with checkmark. Label: `DLT Expectations`. Text: `Reject or quarantine at schema level`.
-        *   **Pillar 3**: Key/Lock icon. Label: `Fine-Grained UC Governance`. Text: `Row filters & Column-level masking`.
-        *   **Pillar 4**: Git branch icon. Label: `DAB Infrastructure-as-Code`. Text: `Git-driven GitHub Actions CI/CD`.
+    *   **Layout**: Split-screen design. Left side shows GCP's three-part streaming stack; Right side shows Databricks' Unified Streaming Stack, highlighting code reduction and ease of governance.
+    *   **Main Graphic (GCP vs Databricks Flow)**:
+        *   *Left Box (The Old Way - GCP)*: 
+            `[Pub/Sub (Queue)]` ──> `[Dataflow (Beam Compute)]` ──> `[BigQuery (Warehouse)]`
+            *(Note overlay: 'Complex, dual-engine codebase, high maintenance overhead')*
+        *   *Right Box (The Lakehouse Way - Databricks)*:
+            `[S3 Bucket]` ──> `[Auto Loader]` ──> `[Delta Live Tables (DLT)]` ──> `[Unity Catalog Delta Lake]`
+            *(Note overlay: 'Single unified SQL codebase, managed auto-scaling, embedded quality checks')*
+    *   **Color Accents**: Use Terracotta Orange (`#FF3621`) for the Databricks box to make the solution pop.
 
 ---
 
