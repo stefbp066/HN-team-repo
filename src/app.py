@@ -11,18 +11,20 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
     try:
         from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
         
-        # Prompt for Llama-3.3 semantic contradiction check
+        # Prompt for Llama-3.3 clinical compliance audit using IPHS & ISCCM rules of thumb
         prompt = (
             f"You are an expert healthcare data quality auditor. Analyze the following unstructured facility description "
-            f"and verify if it logically contradicts the stated capabilities of the facility.\n\n"
+            f"and verify if it logically contradicts the stated capabilities or violates standard clinical safety thresholds.\n\n"
             f"Description: {description}\n"
             f"Stated Capabilities: {capability}\n\n"
-            f"Analyze carefully. If the description lacks details, that is a gap, not a contradiction. "
-            f"If the description directly claims services/infrastructure (like an ICU or Trauma Center) "
-            f"but the capability fields do not list them, or vice versa, flag it as a contradiction.\n\n"
+            f"Standard Clinical Rules of Thumb (Indian Public Health Standards - IPHS & ISCCM):\n"
+            f"1. ICU Bed-to-Doctor Ratio: Minimum 1 specialized doctor/intensivist per 4-6 ICU beds. A high bed count with near-zero doctors is clinically unsafe and highly suspicious.\n"
+            f"2. 24/7 Emergency Department: Requires a minimum of 4 rotating casualty medical officers/doctors to physically maintain a continuous 24/7 rotational shift.\n"
+            f"3. Major Surgical Procedures: Complex surgeries (bypass, orthopedics, trauma) require dedicated anesthesia equipment, ventilators, and surgical specialists.\n\n"
+            f"Evaluate the description and database claims carefully. If a facility grossly violates these clinical safety thresholds or directly contradicts itself, flag it as a contradiction.\n\n"
             f"Respond in exactly this format:\n"
             f"VERDICT: [CONTRADICTION DETECTED or NO CONTRADICTION DETECTED]\n"
-            f"REASON: [Your 1-sentence reason]"
+            f"REASON: [Your 1-sentence reason referencing IPHS/clinical guidelines if violated]"
         )
         
         # Execute query using validated SDK dataclass structures
@@ -90,18 +92,20 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
     try:
         from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
         
-        # Prompt for Llama-3.3 semantic contradiction check
+        # Prompt for Llama-3.3 clinical compliance audit using IPHS & ISCCM rules of thumb
         prompt = (
             f"You are an expert healthcare data quality auditor. Analyze the following unstructured facility description "
-            f"and verify if it logically contradicts the stated capabilities of the facility.\n\n"
+            f"and verify if it logically contradicts the stated capabilities or violates standard clinical safety thresholds.\n\n"
             f"Description: {description}\n"
             f"Stated Capabilities: {capability}\n\n"
-            f"Analyze carefully. If the description lacks details, that is a gap, not a contradiction. "
-            f"If the description directly claims services/infrastructure (like an ICU or Trauma Center) "
-            f"but the capability fields do not list them, or vice versa, flag it as a contradiction.\n\n"
+            f"Standard Clinical Rules of Thumb (Indian Public Health Standards - IPHS & ISCCM):\n"
+            f"1. ICU Bed-to-Doctor Ratio: Minimum 1 specialized doctor/intensivist per 4-6 ICU beds. A high bed count with near-zero doctors is clinically unsafe and highly suspicious.\n"
+            f"2. 24/7 Emergency Department: Requires a minimum of 4 rotating casualty medical officers/doctors to physically maintain a continuous 24/7 rotational shift.\n"
+            f"3. Major Surgical Procedures: Complex surgeries (bypass, orthopedics, trauma) require dedicated anesthesia equipment, ventilators, and surgical specialists.\n\n"
+            f"Evaluate the description and database claims carefully. If a facility grossly violates these clinical safety thresholds or directly contradicts itself, flag it as a contradiction.\n\n"
             f"Respond in exactly this format:\n"
             f"VERDICT: [CONTRADICTION DETECTED or NO CONTRADICTION DETECTED]\n"
-            f"REASON: [Your 1-sentence reason]"
+            f"REASON: [Your 1-sentence reason referencing IPHS/clinical guidelines if violated]"
         )
         
         # Execute query using validated SDK dataclass structures
