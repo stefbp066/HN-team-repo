@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import time
+from typing import Optional, Any
 from databricks.sdk import WorkspaceClient
 
 # Set up Streamlit page config
@@ -14,7 +15,7 @@ st.set_page_config(
 
 # Initialize Databricks Workspace Client
 @st.cache_resource
-def get_workspace_client():
+def get_workspace_client() -> Optional[WorkspaceClient]:
     try:
         # Programmatically reads local env variables when running inside Databricks App
         return WorkspaceClient()
@@ -24,7 +25,7 @@ def get_workspace_client():
 
 # Discover the SQL Warehouse ID programmatically
 @st.cache_data
-def get_warehouse_id():
+def get_warehouse_id() -> Optional[str]:
     w = get_workspace_client()
     if not w:
         return None
@@ -38,7 +39,7 @@ def get_warehouse_id():
     return None
 
 # Helper to run any SQL statement with synchronous polling
-def run_sql_statement(w, warehouse_id, sql_query):
+def run_sql_statement(w: WorkspaceClient, warehouse_id: str, sql_query: str) -> Optional[Any]:
     try:
         response = w.statement_execution.execute_statement(
             warehouse_id=warehouse_id,
@@ -64,8 +65,8 @@ def run_sql_statement(w, warehouse_id, sql_query):
         st.error(f"SQL Execution Error: {e}")
         return None
 
-# Helper to fetch query results into a DataFrame
-def run_sql_query(w, warehouse_id, sql_query):
+# Helper to fetch query results into a DataFrame with type safety
+def run_sql_query(w: WorkspaceClient, warehouse_id: str, sql_query: str) -> pd.DataFrame:
     response = run_sql_statement(w, warehouse_id, sql_query)
     if not response or not response.manifest or not response.manifest.schema:
         return pd.DataFrame()
@@ -93,7 +94,7 @@ def run_sql_query(w, warehouse_id, sql_query):
     return pd.DataFrame(rows, columns=columns)
 
 # Self-initialize the Gold Table on Databricks if not exists
-def initialize_gold_table(w, warehouse_id):
+def initialize_gold_table(w: WorkspaceClient, warehouse_id: str) -> None:
     # Check if table exists
     check_query = "SELECT 1 FROM workspace.information_schema.tables WHERE table_schema='default' AND table_name='gold_flagged_facilities' LIMIT 1"
     df = run_sql_query(w, warehouse_id, check_query)
@@ -158,9 +159,9 @@ def initialize_gold_table(w, warehouse_id):
         run_sql_statement(w, warehouse_id, setup_query)
         st.success("✅ Gold Table Initialized successfully!")
 
-# Load Data from Gold Table
+# Load Data from Gold Table with Strict Type Enforcement and Schema Castings
 @st.cache_data
-def load_gold_data(warehouse_id):
+def load_gold_data(warehouse_id: str) -> pd.DataFrame:
     w = get_workspace_client()
     if not w or not warehouse_id:
         return pd.DataFrame()
@@ -170,12 +171,33 @@ def load_gold_data(warehouse_id):
     df = run_sql_query(w, warehouse_id, query)
     
     if not df.empty:
-        # Cast data types correctly
-        df['trust_score'] = pd.to_numeric(df['trust_score'], errors='coerce').fillna(100).astype(int)
+        # Enforce strict pandas data types and schema handling to avoid type mismatches during Streamlit rendering
+        df['unique_id'] = df['unique_id'].astype(str)
+        df['name'] = df['name'].fillna("Unknown").astype(str)
+        df['address_city'] = df['address_city'].fillna("Unknown").astype(str)
+        df['address_stateOrRegion'] = df['address_stateOrRegion'].fillna("Unknown").astype(str)
+        df['description'] = df['description'].fillna("").astype(str)
+        df['capability'] = df['capability'].fillna("").astype(str)
+        df['procedure'] = df['procedure'].fillna("").astype(str)
+        df['equipment'] = df['equipment'].fillna("").astype(str)
+        
+        # Convert meta strings to numeric types with safe NaN/None handling
+        df['numberDoctors'] = pd.to_numeric(df['numberDoctors'], errors='coerce').fillna(0).astype(int)
+        df['capacity'] = pd.to_numeric(df['capacity'], errors='coerce').fillna(0).astype(int)
+        
+        # Strict validation flags casting (Integer boolean mapping)
         df['flag_icu_no_capacity'] = pd.to_numeric(df['flag_icu_no_capacity'], errors='coerce').fillna(0).astype(int)
         df['flag_emergency_no_doctors'] = pd.to_numeric(df['flag_emergency_no_doctors'], errors='coerce').fillna(0).astype(int)
         df['flag_surgery_no_anesthesia'] = pd.to_numeric(df['flag_surgery_no_anesthesia'], errors='coerce').fillna(0).astype(int)
         df['flag_data_desert'] = pd.to_numeric(df['flag_data_desert'], errors='coerce').fillna(0).astype(int)
+        
+        # Trust score evaluation casting
+        df['trust_score'] = pd.to_numeric(df['trust_score'], errors='coerce').fillna(100).astype(int)
+        
+        # Triage status and text notes casting
+        df['review_status'] = df['review_status'].fillna("PENDING").astype(str)
+        df['reviewer_notes'] = df['reviewer_notes'].fillna("").astype(str)
+        
     return df
 
 # Main logic
