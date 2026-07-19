@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import time
 import json
+import pydeck as pdk
 from typing import Optional, Any, Tuple, List
 from databricks.sdk import WorkspaceClient
 # Helper to call Databricks Foundation Model Serving for semantic auditing using official ChatMessage Dataclasses
@@ -41,6 +42,12 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
         return str(response)
     except Exception as e:
         return f"Databricks Serving Error: {e}"
+
+# Helper to convert hex colors to PyDeck RGB list with transparency
+def hex_to_rgb(hex_str: str) -> List[int]:
+    hex_str = hex_str.lstrip('#')
+    # Return [R, G, B, Alpha]
+    return [int(hex_str[i:i+2], 16) for i in (0, 2, 4)] + [180]
 
 # Helper to parse messy JSON-like strings safely
 def parse_messy_list(raw_text: str) -> List[str]:
@@ -696,14 +703,54 @@ else:
                             return '#1f77b4' # Blue (Normal)
                             
                     df_map['color'] = df_map.apply(get_map_color, axis=1)
+                    df_map['color_rgb'] = df_map['color'].apply(hex_to_rgb)
                     
-                    # Render Streamlit Native Map - 100% immune to Mapbox CDN/firewall blocks
-                    st.map(
-                        df_map, 
-                        latitude="latitude", 
-                        longitude="longitude", 
-                        color="color", 
-                        size=25,
+                    # Define View State centered on India
+                    view_state = pdk.ViewState(
+                        latitude=20.5937,
+                        longitude=78.9629,
+                        zoom=3.8,
+                        pitch=0
+                    )
+                    
+                    # Define Interactive Scatter Layer
+                    layer = pdk.Layer(
+                        "ScatterplotLayer",
+                        df_map,
+                        pickable=True,
+                        opacity=0.8,
+                        stroked=True,
+                        filled=True,
+                        radius_scale=6,
+                        radius_min_pixels=6,
+                        radius_max_pixels=15,
+                        line_width_min_pixels=1,
+                        get_position="[longitude, latitude]",
+                        get_radius=15000,
+                        get_fill_color="color_rgb",
+                        get_line_color=[255, 255, 255, 200], # White outline
+                    )
+                    
+                    # Render PyDeck Map - Immune to Mapbox CDN blocks, provides professional hover tooltips
+                    st.pydeck_chart(
+                        pdk.Deck(
+                            layers=[layer],
+                            initial_view_state=view_state,
+                            map_style=None, # Uses fallback vector grid (bypasses internet proxy issues completely)
+                            tooltip={
+                                "html": "<b>Facility ID:</b> {unique_id}<br/>"
+                                        "<b>Name:</b> {name}<br/>"
+                                        "<b>Trust Score:</b> {trust_score}/100",
+                                "style": {
+                                    "backgroundColor": "#0C1B33",
+                                    "color": "white",
+                                    "fontFamily": "sans-serif",
+                                    "fontSize": "12px",
+                                    "borderRadius": "4px",
+                                    "padding": "8px"
+                                }
+                            }
+                        ),
                         use_container_width=True
                     )
                 else:
