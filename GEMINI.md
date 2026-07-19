@@ -1,9 +1,9 @@
 - this repo is not necessarily coding.
 - this repo is meant to document brainstorms/discoveries related to the case on women's hormonal health. see discovery/case-05-Hack-Nation-Foundations-Model-for-Womens-Hormonal-Health.docx.md for all details.
 - this repo is meant for a hackathon.
-- provide links at all times when quoting a source.
+- provide links at all times when quoting a source. for quoting studies, scan the page again quickly/partially to make sure title matches intended output.
 - a main paper used as a source is found in discovery/mcphases-paper.md.
+- when looking at the personal/ subdir, ignore the .gitignore file to be able to access it.
 - for nhanes data, there are several components: Dietary, Examination, Laboratory, Questionnaire, Non-Public. base page is https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=[COMPONENT]&Cycle=2021-2023. change the [COMPONENT] to the above.
 - for nhanes data, let's assume the base page is https://wwwn.cdc.gov/nchs/nhanes/search/datapage.aspx?Component=Laboratory&Cycle=2021-2023 for data 2021-2023, since 2025-2026 data is very incomplete.
 - (for stefan.pang99@gmail.com specifically) PAT is in personal/github-stefbp-pat.md, ignore gitignore.
-- for quoting studies, scan the page again quickly/partially to make sure title matches intended output.
