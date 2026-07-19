@@ -85,25 +85,25 @@ This document contains your slide-by-slide structure, core talking points, step-
 
 ---
 
-## Slide 5: Enterprise Scaling Rationale (GCP to Databricks Architecture)
-*   **Slide Title**: Unified Lakehouse Streaming: Scaling to Enterprise Production
+## Slide 5: Enterprise Scaling & Ingestion Frequency
+*   **Slide Title**: Unified Dual-Speed Ingestion: Batch and Streaming at Scale
 *   **Your Script (The Future)**:
-    > "Planners need real-time data streaming to coordinate emergency hospital bed allocations during a crisis. If you come from a Google Cloud background, you are likely used to Pub/Sub, Dataflow, and BigQuery. In Databricks, we achieve the exact same real-time streaming capability, but unified under a single, highly simplified SQL and Delta Lake architecture.
+    > "To productionize our Data Readiness Desk, we must design for two distinct data speeds. Baseline facility metrics like coordinates or specialties are static and should be updated via **Batch (daily)** to minimize compute costs. However, operational metrics like active available ICU beds or active staff must be processed via **Streaming (real-time)** to coordinate emergency crisis routing safely.
     > 
-    > Instead of setting up Pub/Sub topics, we use **Databricks Auto Loader** to stream incoming CSVs/JSONs directly from cloud buckets. Instead of complex Apache Beam pipelines in Dataflow, we use **Delta Live Tables (DLT)**. With DLT, we write standard SQL queries marked with `STREAMING TABLE`. Databricks handles the cluster auto-scaling, state-checkpointing, and data-quality Expectations natively. 
+    > Traditionally, managing both speeds requires separate batch and streaming codebases—creating duplicate pipelines and data lag. 
     > 
-    > This is the power of a Unified Lakehouse—unifying batch and streaming under one governed database."
+    > On Databricks, we unify these frequencies. Using **Auto Loader** and **Delta Live Tables (DLT)**, we use the exact same SQL queries for both workloads. For static metrics, we run DLT in scheduled batch intervals. For crisis metrics, we switch to continuous streaming. One governed Delta table, two ingestion speeds, zero code duplication."
 *   **Visual Layout & Graphic Elements**:
     *   **Background**: Ice Blue White (`#F7F9FC`).
-    *   **Layout**: Split-screen design. Left side shows GCP's three-part streaming stack; Right side shows Databricks' Unified Streaming Stack, highlighting code reduction and ease of governance.
-    *   **Main Graphic (GCP vs Databricks Flow)**:
-        *   *Left Box (The Old Way - GCP)*: 
-            `[Pub/Sub (Queue)]` ──> `[Dataflow (Beam Compute)]` ──> `[BigQuery (Warehouse)]`
-            *(Note overlay: 'Complex, dual-engine codebase, high maintenance overhead')*
-        *   *Right Box (The Lakehouse Way - Databricks)*:
-            `[S3 Bucket]` ──> `[Auto Loader]` ──> `[Delta Live Tables (DLT)]` ──> `[Unity Catalog Delta Lake]`
-            *(Note overlay: 'Single unified SQL codebase, managed auto-scaling, embedded quality checks')*
-    *   **Color Accents**: Use Terracotta Orange (`#FF3621`) for the Databricks box to make the solution pop.
+    *   **Layout**: Horizontal split-screen. Left side focuses on the business need for dual-frequency data; Right side diagrams the technical simplicity of the unified Databricks pipeline.
+    *   **Main Graphic (Unified Data Flow)**:
+        *   **Left (Two Speeds of Health Data)**:
+            *   *Speed A: Static Baseline (Batch)* — `[Hospital Location, Specialties, Established Year]`
+            *   *Speed B: Dynamic Operations (Streaming)* — `[Active ICU Beds, Active Staff Shifts, Emergency Status]`
+        *   **Right (One Unified Pipeline)**:
+            *   `[Auto Loader Ingest]` ──> `[Delta Live Tables (DLT) Engine]` ──> `[Unified Delta Table (UC)]`
+            *   *(Visual indicator showing a toggle button transitioning from 'Batch Interval' to 'Continuous Stream' over the DLT Engine block)*
+    *   **Color Accents**: Highlight the 'Unified Delta Table' in Mint Green (`#00CC96`) and the 'DLT Engine' in Databricks Terracotta Orange (`#FF3621`) to show where the work is unified.
 
 ---
 
