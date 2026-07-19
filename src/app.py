@@ -2,8 +2,63 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import time
-from typing import Optional, Any
+import json
+from typing import Optional, Any, Tuple, List
 from databricks.sdk import WorkspaceClient
+# Helper to parse messy JSON-like strings safely
+def parse_messy_list(raw_text: str) -> List[str]:
+    if not raw_text or raw_text == "NULL" or raw_text.strip() == "":
+        return []
+    # Attempt parsing as a real JSON array
+    try:
+        parsed = json.loads(raw_text)
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if item]
+    except Exception:
+        pass
+    # Fallback parsing: strip brackets, split on commas, strip quotes
+    cleaned = raw_text.strip("[]' \"")
+    # Simple regex to split by commas outside quotes
+    items = [item.strip().strip("'\" ") for item in re.split(r',(?=(?:[^\'\"]*\'[^\']*\')*[^\']*$)', cleaned)]
+    return [item for item in items if item]
+
+# Helper to filter out descriptive junk from actual medical capabilities
+def clean_and_split_capabilities(items: List[str]) -> Tuple[List[str], List[str]]:
+    capabilities = []
+    descriptions = []
+    noise_keywords = [
+        "located in", "established in", "partnership with", "operating since", 
+        "years in healthcare", "private, paid", "sanchalit", "trust sanchalit", 
+        "operating for", "established by"
+    ]
+    
+    for item in items:
+        item_lower = item.lower()
+        # If it has descriptive keywords or is a long sentence (> 90 chars), classify as historical description
+        if any(kw in item_lower for kw in noise_keywords) or len(item) > 90:
+            descriptions.append(item)
+        else:
+            capabilities.append(item)
+    return capabilities, descriptions
+
+# Helper to render clean columns of bullet points in Streamlit
+def render_list_in_cols(items: List[str], title_if_empty: str = "No entries listed."):
+    if not items:
+        st.write(f"*{title_if_empty}*")
+        return
+    
+    # Split list into 2 columns for a tighter, cleaner layout
+    col_a, col_b = st.columns(2)
+    half = (len(items) + 1) // 2
+    
+    with col_a:
+        for item in items[:half]:
+            st.markdown(f"- {item}")
+    with col_b:
+        for item in items[half:]:
+            st.markdown(f"- {item}")
+
+
 
 # Set up Streamlit page config
 st.set_page_config(
@@ -513,18 +568,33 @@ else:
                 if not active_flags:
                     st.success("Clean Record: No contradictions detected by the automated data readiness pipeline.")
 
-            # FULL ROW: Structured Claims with Expanders
+            # FULL ROW: Structured Claims with Expanders and On-The-Fly Cleaning
             st.markdown("---")
             st.markdown("#### Structured Claims:")
             st.write(f"- **Bed Capacity Claim**: `{facility['capacity'] or 'NULL'}`")
             st.write(f"- **Doctors Count**: `{facility['numberDoctors'] or 'NULL'}`")
-            st.write(f"- **Procedures Listed**: `{facility['procedure'] or 'NULL'}`")
             
-            with st.expander("View Capabilities Stated"):
-                st.write(facility['capability'] or 'NULL')
+            # Parse lists
+            raw_capabilities = parse_messy_list(facility['capability'])
+            raw_procedures = parse_messy_list(facility['procedure'])
+            raw_equipment = parse_messy_list(facility['equipment'])
+            
+            # Separate descriptive junk from true capabilities
+            vetted_capabilities, history_descriptions = clean_and_split_capabilities(raw_capabilities)
+            
+            with st.expander("View Services & Capabilities (Cleaned)"):
+                if vetted_capabilities:
+                    render_list_in_cols(vetted_capabilities)
+                if history_descriptions:
+                    st.markdown("<br>**Facility Descriptive & Historical Context:**", unsafe_allow_html=True)
+                    for desc in history_descriptions:
+                        st.info(desc)
+                    
+            with st.expander("View Procedures Listed"):
+                render_list_in_cols(raw_procedures, "No procedures listed.")
                 
             with st.expander("View Equipment Claimed"):
-                st.write(facility['equipment'] or 'NULL')
+                render_list_in_cols(raw_equipment, "No equipment listed.")
 
             st.markdown("---")
             
