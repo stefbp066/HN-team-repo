@@ -102,7 +102,7 @@ def initialize_gold_table(w: WorkspaceClient, warehouse_id: str) -> None:
     if df.empty:
         st.info("🔄 First time launch: Ingesting and building Gold Validation Table inside Databricks default schema...")
         
-        # Complete pipeline query running on Serverless SQL Warehouses
+        # Complete pipeline query running on Serverless SQL Warehouses + Inject Mock Contradictions for Demo
         setup_query = """
         CREATE TABLE IF NOT EXISTS workspace.default.gold_flagged_facilities AS
         SELECT
@@ -155,6 +155,72 @@ def initialize_gold_table(w: WorkspaceClient, warehouse_id: str) -> None:
           'PENDING' as review_status,
           CAST(NULL as string) as reviewer_notes
         FROM databricks_virtue_foundation_dataset_dais_2026.virtue_foundation_dataset.facilities
+        
+        UNION ALL
+        
+        -- Injected Mock Contradiction 1: ICU Beds Mismatch
+        SELECT
+          'MOCK-ICU-BED-FAIL' as unique_id,
+          'Fake Apollo Super-Specialty ICU Center' as name,
+          'Delhi' as address_city,
+          'Delhi' as address_stateOrRegion,
+          'Leading private facility boasting a massive, world-class 50-bed Intensive Care Unit (ICU) with around-the-clock intensive care services, state-of-the-art life support, and highly qualified cardiologists.' as description,
+          'ICU, Cardiology, Emergency' as capability,
+          'ICU Admission, Ventilation' as procedure,
+          'Defibrillator, ECG' as equipment,
+          '12' as numberDoctors,
+          '0' as capacity, -- CONTRADICTION: Claims 50 ICU beds but capacity is 0!
+          1 as flag_icu_no_capacity,
+          0 as flag_emergency_no_doctors,
+          0 as flag_surgery_no_anesthesia,
+          0 as flag_data_desert,
+          70 as trust_score,
+          'PENDING' as review_status,
+          CAST(NULL as string) as reviewer_notes
+          
+        UNION ALL
+        
+        -- Injected Mock Contradiction 2: Emergency Care No Doctors
+        SELECT
+          'MOCK-EMERG-DOC-FAIL' as unique_id,
+          'Patna 24/7 Trauma and Acute Emergency Center' as name,
+          'Patna' as address_city,
+          'Bihar' as address_stateOrRegion,
+          'A prominent regional trauma center offering 24/7 emergency surgeries, disaster response units, and acute triage. Ready to handle major road accidents, fractures, and cardiac arrests at any hour of the night.' as description,
+          'Emergency Care, Trauma Surgery, Triage' as capability,
+          'Triage, Fracture Splinting' as procedure,
+          'Oxygen Cylinders, Stretcher' as equipment,
+          '0' as numberDoctors, -- CONTRADICTION: 24/7 emergency trauma but 0 doctors!
+          '15' as capacity,
+          0 as flag_icu_no_capacity,
+          1 as flag_emergency_no_doctors,
+          0 as flag_surgery_no_anesthesia,
+          0 as flag_data_desert,
+          65 as trust_score,
+          'PENDING' as review_status,
+          CAST(NULL as string) as reviewer_notes
+          
+        UNION ALL
+        
+        -- Injected Mock Contradiction 3: Surgery No Anesthesia Support
+        SELECT
+          'MOCK-SURG-ANES-FAIL' as unique_id,
+          'Jaipur Royal General and Open-Heart Surgery Clinic' as name,
+          'Jaipur' as address_city,
+          'Rajasthan' as address_stateOrRegion,
+          'Boutique private surgical clinic specializing in complex open-heart surgeries, tumor removals, and orthopedic bypass operations. Fully equipped operation theaters available.' as description,
+          'Cardio-thoracic Surgery, General Surgery' as capability,
+          'Coronary Artery Bypass, Appendectomy' as procedure,
+          'Scalpels, Surgical Lamps, Forceps' as equipment, -- CONTRADICTION: Major open-heart surgery but no anesthesia or ventilator!
+          '5' as numberDoctors,
+          '10' as capacity,
+          0 as flag_icu_no_capacity,
+          0 as flag_emergency_no_doctors,
+          1 as flag_surgery_no_anesthesia,
+          0 as flag_data_desert,
+          80 as trust_score,
+          'PENDING' as review_status,
+          CAST(NULL as string) as reviewer_notes
         """
         run_sql_statement(w, warehouse_id, setup_query)
         st.success("✅ Gold Table Initialized successfully!")
@@ -237,6 +303,16 @@ else:
         emergency_flag = st.sidebar.checkbox("Emergency Claim Conflict")
         anesthesia_flag = st.sidebar.checkbox("Surgical Anesthesia Conflict")
         desert_flag = st.sidebar.checkbox("Critical Data Desert")
+        
+        # Reset Demo Database button
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("🛠️ Demo Management")
+        if st.sidebar.button("⚠️ Reset Demo Database", use_container_width=True, type="secondary"):
+            with st.spinner("Dropping table and resetting demo state..."):
+                run_sql_statement(w, warehouse_id, "DROP TABLE IF EXISTS workspace.default.gold_flagged_facilities")
+                st.cache_data.clear()
+            st.sidebar.success("Database Reset! Refreshing page...")
+            st.rerun()
         
         # Apply filters
         df = df_raw.copy()
