@@ -25,7 +25,7 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
         # Use api_client.do() raw HTTP payload bypass to avoid Databricks SDK dict.as_dict() validation bugs
         response = w.api_client.do(
             method="POST",
-            path="/api/2.0/serving-endpoints/databricks-meta-llama-3-1-70b-instruct/invocations",
+            path="/api/2.0/serving-endpoints/databricks-meta-llama-3-3-70b-instruct/invocations",
             body={
                 "messages": [
                     {"role": "user", "content": prompt}
@@ -96,7 +96,7 @@ def run_ai_audit(w: WorkspaceClient, description: str, capability: str) -> str:
         # Use api_client.do() raw HTTP payload bypass to avoid Databricks SDK dict.as_dict() validation bugs
         response = w.api_client.do(
             method="POST",
-            path="/api/2.0/serving-endpoints/databricks-meta-llama-3-1-70b-instruct/invocations",
+            path="/api/2.0/serving-endpoints/databricks-meta-llama-3-3-70b-instruct/invocations",
             body={
                 "messages": [
                     {"role": "user", "content": prompt}
