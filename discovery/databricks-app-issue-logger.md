@@ -22,9 +22,9 @@ To function correctly, the App Service Principal must be granted the following p
 
 | Securable Object | Privilege Granted | Reason |
 |---|---|---|
-| **Catalog** `databricks_virtue_foundation_dataset_dais_2026` | `USE CATALOG` | Allows the App to see and traverse the Delta Sharing shared catalog. |
-| **Schema** `databricks_virtue_foundation_dataset_dais_2026.virtue_foundation_dataset` | `SELECT` | Grants read access to the source table containing 10,088 messy records. |
-| **Catalog** `workspace` | `USE CATALOG` | Allows the App to target the workspace-managed catalog. |
+| Catalog `databricks_virtue_foundation_dataset_dais_2026` | `USE CATALOG` | Allows the App to see and traverse the Delta Sharing shared catalog. |
+| Schema `databricks_virtue_foundation_dataset_dais_2026.virtue_foundation_dataset` | `USE SCHEMA`, `SELECT` | Grants traverse and read access to the source table containing 10,088 messy records. |
+| Catalog `workspace` | `USE CATALOG` | Allows the App to target the workspace-managed catalog. |
 | **Schema** `workspace.default` | `USE SCHEMA`, `CREATE TABLE`, `SELECT`, `MODIFY` | Allows the App to automatically compile the Silver/Gold tables and persist user review status changes. |
 
 ---
@@ -33,12 +33,10 @@ To function correctly, the App Service Principal must be granted the following p
 
 ### Issue #01: Automated Ingestion Privilege Block
 *   **Severity**: 🔴 Critical
-*   **Symptom**: App showed warning `No records loaded. Verify your Shared Catalog access or SQL Warehouse status.` Logs indicated:
-    ```
-    [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE CATALOG on Catalog 'databricks_virtue_foundation_dataset_dais_2026'. SQLSTATE: 42501
-    ```
-*   **Root Cause**: The App Service Principal was executing the initialization statement `CREATE TABLE IF NOT EXISTS workspace.default.gold_flagged_facilities AS SELECT ... FROM databricks_virtue_foundation_dataset_dais_2026...` but had no access rights to either the source catalog or the destination default schema.
-*   **Resolution**: Executed five SQL `GRANT` statements from an admin session to assign catalog-level `USE` and table-level `SELECT/MODIFY` rights to the `edc29524-5306-48d2-9403-edfd461ab62f` service principal.
+*   **Symptom**: App showed warning `No records loaded. Verify your Shared Catalog access or SQL Warehouse status.` Logs indicated `INSUFFICIENT_PERMISSIONS: User does not have USE CATALOG` and later `User does not have USE SCHEMA`.
+*   **Root Cause**: The App Service Principal was executing the initialization statement `CREATE TABLE IF NOT EXISTS workspace.default.gold_flagged_facilities AS SELECT ... FROM databricks_virtue_foundation_dataset_dais_2026...` but lacked the `USE CATALOG` and `USE SCHEMA` traversal rights on the source Delta Sharing structures, as well as `CREATE TABLE` privileges on the target schema.
+*   **Resolution**: Executed SQL `GRANT` statements from an admin session to assign catalog-level `USE CATALOG`, schema-level `USE SCHEMA`, schema-level `SELECT`, and target schema-level `CREATE TABLE / SELECT / MODIFY` privileges to the `edc29524-5306-48d2-9403-edfd461ab62f` service principal.
+
 
 ---
 

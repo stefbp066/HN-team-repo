@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import time
 from databricks.sdk import WorkspaceClient
 
 # Set up Streamlit page config
@@ -36,13 +37,28 @@ def get_warehouse_id():
         st.sidebar.error(f"Error finding SQL Warehouse: {e}")
     return None
 
-# Helper to run any SQL statement
+# Helper to run any SQL statement with synchronous polling
 def run_sql_statement(w, warehouse_id, sql_query):
     try:
         response = w.statement_execution.execute_statement(
             warehouse_id=warehouse_id,
             statement=sql_query
         )
+        
+        # Poll statement status to avoid asynchronous race conditions
+        statement_id = response.statement_id
+        state = response.status.state.name
+        
+        while state in ["PENDING", "RUNNING"]:
+            time.sleep(1)
+            status_resp = w.statement_execution.get_statement(statement_id=statement_id)
+            state = status_resp.status.state.name
+            if state == "SUCCEEDED":
+                return status_resp
+            elif state in ["FAILED", "CANCELED"]:
+                error_msg = status_resp.status.error.message if status_resp.status.error else "Unknown error"
+                raise Exception(f"Statement failed with state {state}: {error_msg}")
+                
         return response
     except Exception as e:
         st.error(f"SQL Execution Error: {e}")
