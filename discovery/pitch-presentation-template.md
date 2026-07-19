@@ -29,22 +29,26 @@ This document contains your slide-by-slide structure, core talking points, step-
 
 ---
 
-## Slide 2: The Core Engineering Solution (Under the Hood)
-*   **Slide Title**: A Medallion Data Quality Pipeline on Databricks Serverless
-*   **Your Script (The Architecture)**:
-    > "We built a self-initializing medallion architecture inside Databricks using Unity Catalog and Serverless SQL. 
+## Slide 2: The Core Engineering Solution (Overcoming Platform Boundaries)
+*   **Slide Title**: Overcoming Platform Boundaries: Custom Serverless Platform Engineering
+*   **Your Script (The Tech Rationale)**:
+    > "Deploying a native app on Databricks Serverless is more than just spinning up a container—we hit real, low-level platform boundaries, and we engineered our way past them.
     > 
-    > Our system consumes from the shared Delta Sharing Catalog, automatically standardizes sparse structures in our Silver Layer, and compiles a Gold table. In the Gold layer, we run a dual-validation engine executing four hard contradiction logic rules and a weighted trust score to bubble up high-risk, conflicting records directly to the triage desk."
+    > First, Serverless SQL execution is asynchronous. To prevent a race condition where our app queries tables before they are fully compiled, we built a **synchronous polling engine** that blocks Python execution and queries the `get_statement` API until our schema is guaranteed ready on disk.
+    > 
+    > Second, because raw scraping data is notoriously inconsistent, we enforced a **strict, type-safe schema** in Python, casting raw lists and string representations of integers before Streamlit/Plotly rendering.
+    > 
+    > Finally, to run semantic audits on-demand, we integrated Llama 3.3. When standard dictionaries threw SDK serialization errors, we bypassed the bugs by binding directly to typed, native **ChatMessage dataclasses**. This isn't just an app; it is a hardened, platform-aware engineering solution."
 *   **Visual Layout & Graphic Elements**:
-    *   **Background**: Ice Blue White (`#F7F9FC`).
-    *   **Layout**: 3-stage horizontal split chevron diagram representing the Medallion flow (Bronze -> Silver -> Gold).
-    *   **Main Graphic (Horizontal Flow Diagram)**:
-        1.  **Bronze (Left)**: Icon of unstructured text data with a connection arrow. Label: `Delta Sharing Raw Catalog`.
-        2.  **Silver (Center)**: Icon of databases cleaning. Label: `Structure Normalization & Type Casts (Pandas/SQL)`.
-        3.  **Gold (Right)**: Glowing Mint Green block. Label: `Automated Contradiction Validation Engine`.
-    *   **Arrow overlays**: Transition lines marked with "ACID Transactions" and "Serverless Compute".
+    *   **Background**: Charcoal Obsidian Dark (`#111827`) for a high-tech console feel.
+    *   **Layout**: Center-aligned core engine diagram with three outward-radiating "Hardened Security Braces" representing your custom engineering fixes.
+    *   **Main Graphic (The Hardened Serverless Container)**:
+        *   *Center*: A secure container icon representing `Databricks Serverless App Container`.
+        *   *Brace 1 (Top Left)*: `Custom Synchronous Polling Engine` (Icon of a loading circular status bar). Text: `Queries w.statement_execution.get_statement in a while loop to prevent asynchronous TABLE_OR_VIEW_NOT_FOUND race conditions.`
+        *   *Brace 2 (Top Right)*: `Strict PEP DataFrame Type Casting` (Icon of a typed dataset schema with checkmarks). Text: `Enforces strict casts on inconsistent float, string, and null metrics, guaranteeing Streamlit/Plotly visual stability.`
+        *   *Brace 3 (Bottom)*: `Typed SDK ChatMessage Binding` (Icon of a terminal bracket with a brain icon). Text: `Instantiates native ChatMessage & ChatMessageRole objects, bypassing dictionary serialization bugs in the Databricks Python SDK.`
+    *   **Color Accents**: Use glowing Mint Green (`#00CC96`) for the braces to show they are "Active & Hardened" and Databricks Orange (`#FF3621`) for the center Serverless container.
 
----
 
 ## Slide 3: The 4 Core Contradiction Rules
 *   **Slide Title**: Algorithmic Integrity Over Manual Audits
