@@ -477,164 +477,164 @@ else:
             # PLOTS & CHARTS PANEL
             c_left, c_right = st.columns(2)
         
-        with c_left:
-            st.subheader("Trust Score Distribution")
-            fig_hist = px.histogram(df, x="trust_score", nbins=20, labels={'trust_score': 'Trust Score'}, 
-                                    color_discrete_sequence=['#1f77b4'], title="Facility Trust Assessment Profile")
-            st.plotly_chart(fig_hist, use_container_width=True)
+            with c_left:
+                st.subheader("Trust Score Distribution")
+                fig_hist = px.histogram(df, x="trust_score", nbins=20, labels={'trust_score': 'Trust Score'}, 
+                                        color_discrete_sequence=['#1f77b4'], title="Facility Trust Assessment Profile")
+                st.plotly_chart(fig_hist, use_container_width=True)
             
-        with c_right:
-            st.subheader("Flag Prevalence")
-            flag_counts = pd.DataFrame({
-                'Flag Type': ['ICU Beds Missing', 'Emergency No Doctors', 'Surgical No Anesthesia', 'Data Desert'],
-                'Count': [
-                    df['flag_icu_no_capacity'].sum(),
-                    df['flag_emergency_no_doctors'].sum(),
-                    df['flag_surgery_no_anesthesia'].sum(),
-                    df['flag_data_desert'].sum()
-                ]
-            })
-            fig_bar = px.bar(flag_counts, x="Flag Type", y="Count", color="Flag Type",
-                             title="Prevalence of Contradictions Found",
-                             color_discrete_sequence=px.colors.qualitative.Pastel)
-            st.plotly_chart(fig_bar, use_container_width=True)
-
-        st.markdown("---")
-
-        # TRIAGE QUEUE & WORKFLOW
-        st.subheader("🚨 The Triage Queue (Sorted by lowest trust)")
-        
-        # Display search-ready list of messy/flagged facilities
-        df_display = df[['unique_id', 'name', 'address_city', 'address_stateOrRegion', 'trust_score', 'review_status']].sort_values(by='trust_score')
-        
-        def color_trust_score(val):
-            if val < 70:
-                return 'background-color: #ffcccc; color: #990000; font-weight: bold'
-            elif val < 90:
-                return 'background-color: #fff4cc; color: #886600'
-            return 'background-color: #ccffcc; color: #006600'
-            
-        styled_df = df_display.style.map(color_trust_score, subset=['trust_score'])
-        st.dataframe(styled_df, use_container_width=True, hide_index=True)
-        
-        st.markdown("---")
-        
-        # DETAIL INSPECTOR AND ACTION PANEL
-        st.subheader("🔍 Selected Facility Deep Audit & Traceability")
-        
-        # Allow user to pick a facility ID
-        search_options = df_display['unique_id'].tolist()
-        if search_options:
-            selected_id = st.selectbox("Choose Facility Unique ID to Audit:", search_options)
-            
-            # Fetch single selected record details
-            facility = df[df['unique_id'] == selected_id].iloc[0]
-            
-            # FULL ROW: Key Identification
-            st.markdown(f"### {facility['name']}")
-            st.markdown(f"**Location**: {facility['address_city']}, {facility['address_stateOrRegion']}")
-            st.markdown(
-                f"**Computed Trust Score**: `{facility['trust_score']}/100` "
-                f'<span title="Base 100. Deductions: ICU missing beds (-30), Trauma missing doctors (-35), Surgery missing anesthesia (-20), Complete Data Desert (-15).">ℹ️</span>',
-                unsafe_allow_html=True
-            )
-            st.markdown(f"**Current Status**: `{facility['review_status']}`")
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # TWO COLUMNS: Unstructured Notes vs Warnings
-            d_col1, d_col2 = st.columns(2)
-            
-            with d_col1:
-                st.markdown("#### Raw Facility Description (Unstructured Note):")
-                st.info(facility['description'] if facility['description'] else "No description available.")
-                
-            with d_col2:
-                # Render active flags clearly without emojis in the title
-                st.markdown("#### Active Trust Warnings:")
-                active_flags = False
-                if facility['flag_icu_no_capacity'] == 1:
-                    st.error("ICU Bed Mismatch: Facility claims ICU capability/notes but lists 0 or NULL bed capacity.")
-                    active_flags = True
-                if facility['flag_emergency_no_doctors'] == 1:
-                    st.error("Emergency Mismatch: Facility claims emergency/trauma but lists 0 or NULL doctors.")
-                    active_flags = True
-                if facility['flag_surgery_no_anesthesia'] == 1:
-                    st.error("Anesthesia Gap: Complex surgeries/procedures are listed but no Anesthesia or Ventilator equipment found.")
-                    active_flags = True
-                if facility['flag_data_desert'] == 1:
-                    st.warning("Data Desert Alert: No structural metrics (established year, capacity, doctors) available for validation.")
-                    active_flags = True
-                    
-                if not active_flags:
-                    st.success("Clean Record: No contradictions detected by the automated data readiness pipeline.")
-
-            # FULL ROW: Structured Claims with Expanders and On-The-Fly Cleaning
-            st.markdown("---")
-            st.markdown("#### Structured Claims:")
-            st.write(f"- **Bed Capacity Claim**: `{facility['capacity'] or 'NULL'}`")
-            st.write(f"- **Doctors Count**: `{facility['numberDoctors'] or 'NULL'}`")
-            
-            # Parse lists
-            raw_capabilities = parse_messy_list(facility['capability'])
-            raw_procedures = parse_messy_list(facility['procedure'])
-            raw_equipment = parse_messy_list(facility['equipment'])
-            
-            # Separate descriptive junk from true capabilities
-            vetted_capabilities, history_descriptions = clean_and_split_capabilities(raw_capabilities)
-            
-            with st.expander("View Services & Capabilities (Cleaned)"):
-                if vetted_capabilities:
-                    render_list_in_cols(vetted_capabilities)
-                if history_descriptions:
-                    st.markdown("<br>**Facility Descriptive & Historical Context:**", unsafe_allow_html=True)
-                    for desc in history_descriptions:
-                        st.info(desc)
-                    
-            with st.expander("View Procedures Listed"):
-                render_list_in_cols(raw_procedures, "No procedures listed.")
-                
-            with st.expander("View Equipment Claimed"):
-                render_list_in_cols(raw_equipment, "No equipment listed.")
+            with c_right:
+                st.subheader("Flag Prevalence")
+                flag_counts = pd.DataFrame({
+                    'Flag Type': ['ICU Beds Missing', 'Emergency No Doctors', 'Surgical No Anesthesia', 'Data Desert'],
+                    'Count': [
+                        df['flag_icu_no_capacity'].sum(),
+                        df['flag_emergency_no_doctors'].sum(),
+                        df['flag_surgery_no_anesthesia'].sum(),
+                        df['flag_data_desert'].sum()
+                    ]
+                })
+                fig_bar = px.bar(flag_counts, x="Flag Type", y="Count", color="Flag Type",
+                                 title="Prevalence of Contradictions Found",
+                                 color_discrete_sequence=px.colors.qualitative.Pastel)
+                st.plotly_chart(fig_bar, use_container_width=True)
 
             st.markdown("---")
+
+            # TRIAGE QUEUE & WORKFLOW
+            st.subheader("🚨 The Triage Queue (Sorted by lowest trust)")
+        
+            # Display search-ready list of messy/flagged facilities
+            df_display = df[['unique_id', 'name', 'address_city', 'address_stateOrRegion', 'trust_score', 'review_status']].sort_values(by='trust_score')
+        
+            def color_trust_score(val):
+                if val < 70:
+                    return 'background-color: #ffcccc; color: #990000; font-weight: bold'
+                elif val < 90:
+                    return 'background-color: #fff4cc; color: #886600'
+                return 'background-color: #ccffcc; color: #006600'
             
-            # THE DECISION DESK (Human-In-The-Loop Writeback)
-            st.subheader("✍️ The Decision Desk (Lakebase Persistence)")
+            styled_df = df_display.style.map(color_trust_score, subset=['trust_score'])
+            st.dataframe(styled_df, use_container_width=True, hide_index=True)
+        
+            st.markdown("---")
+        
+            # DETAIL INSPECTOR AND ACTION PANEL
+            st.subheader("🔍 Selected Facility Deep Audit & Traceability")
+        
+            # Allow user to pick a facility ID
+            search_options = df_display['unique_id'].tolist()
+            if search_options:
+                selected_id = st.selectbox("Choose Facility Unique ID to Audit:", search_options)
             
-            current_notes = facility['reviewer_notes'] if pd.notna(facility['reviewer_notes']) else ""
-            reviewer_notes = st.text_area("Write Reviewer Notes & Audit Evidence Here:", value=current_notes)
+                # Fetch single selected record details
+                facility = df[df['unique_id'] == selected_id].iloc[0]
             
-            act_col1, act_col2, act_col3 = st.columns(3)
+                # FULL ROW: Key Identification
+                st.markdown(f"### {facility['name']}")
+                st.markdown(f"**Location**: {facility['address_city']}, {facility['address_stateOrRegion']}")
+                st.markdown(
+                    f"**Computed Trust Score**: `{facility['trust_score']}/100` "
+                    f'<span title="Base 100. Deductions: ICU missing beds (-30), Trauma missing doctors (-35), Surgery missing anesthesia (-20), Complete Data Desert (-15).">ℹ️</span>',
+                    unsafe_allow_html=True
+                )
+                st.markdown(f"**Current Status**: `{facility['review_status']}`")
+                st.markdown("<br>", unsafe_allow_html=True)
             
-            with act_col1:
-                if st.button("✅ Approve Facility Data", use_container_width=True):
-                    # SQL Update Query
-                    escaped_notes = reviewer_notes.replace("'", "''")
-                    update_query = f"UPDATE workspace.default.gold_flagged_facilities SET review_status = 'APPROVED', reviewer_notes = '{escaped_notes}' WHERE unique_id = '{selected_id}'"
-                    with st.spinner("Writing back to Unity Catalog..."):
-                        run_sql_statement(w, warehouse_id, update_query)
-                    st.success("Facility data approved successfully!")
-                    st.cache_data.clear() # Clear cache to refresh values instantly on reload
-                    st.rerun()
+                # TWO COLUMNS: Unstructured Notes vs Warnings
+                d_col1, d_col2 = st.columns(2)
+            
+                with d_col1:
+                    st.markdown("#### Raw Facility Description (Unstructured Note):")
+                    st.info(facility['description'] if facility['description'] else "No description available.")
+                
+                with d_col2:
+                    # Render active flags clearly without emojis in the title
+                    st.markdown("#### Active Trust Warnings:")
+                    active_flags = False
+                    if facility['flag_icu_no_capacity'] == 1:
+                        st.error("ICU Bed Mismatch: Facility claims ICU capability/notes but lists 0 or NULL bed capacity.")
+                        active_flags = True
+                    if facility['flag_emergency_no_doctors'] == 1:
+                        st.error("Emergency Mismatch: Facility claims emergency/trauma but lists 0 or NULL doctors.")
+                        active_flags = True
+                    if facility['flag_surgery_no_anesthesia'] == 1:
+                        st.error("Anesthesia Gap: Complex surgeries/procedures are listed but no Anesthesia or Ventilator equipment found.")
+                        active_flags = True
+                    if facility['flag_data_desert'] == 1:
+                        st.warning("Data Desert Alert: No structural metrics (established year, capacity, doctors) available for validation.")
+                        active_flags = True
                     
-            with act_col2:
-                if st.button("🔴 Flag as Suspicious / Fraudulent", use_container_width=True):
-                    escaped_notes = reviewer_notes.replace("'", "''")
-                    update_query = f"UPDATE workspace.default.gold_flagged_facilities SET review_status = 'FLAGGED', reviewer_notes = '{escaped_notes}' WHERE unique_id = '{selected_id}'"
-                    with st.spinner("Flagging record..."):
-                        run_sql_statement(w, warehouse_id, update_query)
-                    st.error("Facility flagged for review!")
-                    st.cache_data.clear()
-                    st.rerun()
+                    if not active_flags:
+                        st.success("Clean Record: No contradictions detected by the automated data readiness pipeline.")
+
+                # FULL ROW: Structured Claims with Expanders and On-The-Fly Cleaning
+                st.markdown("---")
+                st.markdown("#### Structured Claims:")
+                st.write(f"- **Bed Capacity Claim**: `{facility['capacity'] or 'NULL'}`")
+                st.write(f"- **Doctors Count**: `{facility['numberDoctors'] or 'NULL'}`")
+            
+                # Parse lists
+                raw_capabilities = parse_messy_list(facility['capability'])
+                raw_procedures = parse_messy_list(facility['procedure'])
+                raw_equipment = parse_messy_list(facility['equipment'])
+            
+                # Separate descriptive junk from true capabilities
+                vetted_capabilities, history_descriptions = clean_and_split_capabilities(raw_capabilities)
+            
+                with st.expander("View Services & Capabilities (Cleaned)"):
+                    if vetted_capabilities:
+                        render_list_in_cols(vetted_capabilities)
+                    if history_descriptions:
+                        st.markdown("<br>**Facility Descriptive & Historical Context:**", unsafe_allow_html=True)
+                        for desc in history_descriptions:
+                            st.info(desc)
                     
-            with act_col3:
-                if st.button("📝 Save Internal Notes Only", use_container_width=True):
-                    escaped_notes = reviewer_notes.replace("'", "''")
-                    update_query = f"UPDATE workspace.default.gold_flagged_facilities SET reviewer_notes = '{escaped_notes}' WHERE unique_id = '{selected_id}'"
-                    with st.spinner("Saving note..."):
-                        run_sql_statement(w, warehouse_id, update_query)
-                    st.success("Reviewer notes saved successfully!")
-                    st.cache_data.clear()
-                    st.rerun()
-        else:
-            st.info("No records matching the current filters are available in the Triage Queue.")
+                with st.expander("View Procedures Listed"):
+                    render_list_in_cols(raw_procedures, "No procedures listed.")
+                
+                with st.expander("View Equipment Claimed"):
+                    render_list_in_cols(raw_equipment, "No equipment listed.")
+
+                st.markdown("---")
+            
+                # THE DECISION DESK (Human-In-The-Loop Writeback)
+                st.subheader("✍️ The Decision Desk (Lakebase Persistence)")
+            
+                current_notes = facility['reviewer_notes'] if pd.notna(facility['reviewer_notes']) else ""
+                reviewer_notes = st.text_area("Write Reviewer Notes & Audit Evidence Here:", value=current_notes)
+            
+                act_col1, act_col2, act_col3 = st.columns(3)
+            
+                with act_col1:
+                    if st.button("✅ Approve Facility Data", use_container_width=True):
+                        # SQL Update Query
+                        escaped_notes = reviewer_notes.replace("'", "''")
+                        update_query = f"UPDATE workspace.default.gold_flagged_facilities SET review_status = 'APPROVED', reviewer_notes = '{escaped_notes}' WHERE unique_id = '{selected_id}'"
+                        with st.spinner("Writing back to Unity Catalog..."):
+                            run_sql_statement(w, warehouse_id, update_query)
+                        st.success("Facility data approved successfully!")
+                        st.cache_data.clear() # Clear cache to refresh values instantly on reload
+                        st.rerun()
+                    
+                with act_col2:
+                    if st.button("🔴 Flag as Suspicious / Fraudulent", use_container_width=True):
+                        escaped_notes = reviewer_notes.replace("'", "''")
+                        update_query = f"UPDATE workspace.default.gold_flagged_facilities SET review_status = 'FLAGGED', reviewer_notes = '{escaped_notes}' WHERE unique_id = '{selected_id}'"
+                        with st.spinner("Flagging record..."):
+                            run_sql_statement(w, warehouse_id, update_query)
+                        st.error("Facility flagged for review!")
+                        st.cache_data.clear()
+                        st.rerun()
+                    
+                with act_col3:
+                    if st.button("📝 Save Internal Notes Only", use_container_width=True):
+                        escaped_notes = reviewer_notes.replace("'", "''")
+                        update_query = f"UPDATE workspace.default.gold_flagged_facilities SET reviewer_notes = '{escaped_notes}' WHERE unique_id = '{selected_id}'"
+                        with st.spinner("Saving note..."):
+                            run_sql_statement(w, warehouse_id, update_query)
+                        st.success("Reviewer notes saved successfully!")
+                        st.cache_data.clear()
+                        st.rerun()
+            else:
+                st.info("No records matching the current filters are available in the Triage Queue.")
